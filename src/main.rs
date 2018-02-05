@@ -3,14 +3,20 @@
 #[macro_use]
 extern crate error_chain;
 extern crate rumqtt;
+extern crate serde;
+#[macro_use]
+extern crate serde_derive;
+extern crate serde_json;
 
-use rumqtt::{Message, MqttCallback, MqttClient, MqttOptions, QoS};
+use rumqtt::{Message as MqttMessage, MqttCallback, MqttClient, MqttOptions, QoS};
 use std::{process, thread, time};
 use std::sync::{mpsc, Mutex};
 
 use errors::*;
+use messages::{Envelope, Message};
 
 mod errors;
+mod messages;
 
 fn main() {
     let client_options = MqttOptions::new()
@@ -22,7 +28,7 @@ fn main() {
 
     let on_message_clbk = {
         let tx = Mutex::new(tx);
-        move |msg: Message| {
+        move |msg: MqttMessage| {
             let tx = tx.lock().unwrap();
             tx.send(msg).unwrap();
         }
@@ -55,19 +61,24 @@ fn subscribe(client: &mut MqttClient) -> Result<()> {
     Ok(client.subscribe(topics)?)
 }
 
-fn handle_message(client: &mut MqttClient, msg: Message) -> Result<()> {
+fn handle_message(client: &mut MqttClient, msg: MqttMessage) -> Result<()> {
     println!("Received message: {:?}", msg);
     let payload = String::from_utf8(msg.payload.to_vec())?;
     println!("Payload: {:?}", payload);
 
     match msg.topic.as_ref() {
         "ping" => {
-            let payload = format!("Pong");
-            client.publish("pong", QoS::Level0, payload.into_bytes())?;
+            let envelope: Envelope = serde_json::from_str(&payload)?;
+            let msg = envelope.message()?;
+            match msg {
+                Message::Ping => {
+                    let payload = serde_json::to_string(&Message::Pong).unwrap();
+                    client.publish("pong", QoS::Level0, payload.into_bytes())?;
+                }
+                _ => unimplemented!(),
+            }
         }
-        _ => {
-            unimplemented!();
-        }
+        _ => unimplemented!(),
     }
 
     Ok(())
