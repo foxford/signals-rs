@@ -1,13 +1,52 @@
 use serde_json;
 
 use errors::*;
+use models;
 
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
 #[serde(tag = "type")]
 pub enum Message {
     Ping,
     Pong,
+    RoomsCreateRequest(RoomsCreateRequest),
+    RoomsCreateResponse(RoomsCreateResponse),
 }
+
+#[derive(Debug, PartialEq, Serialize, Deserialize)]
+pub struct RoomsCreateRequest {
+    pub payload: RoomsCreateRequestPayload,
+    cid: String,
+}
+
+type RoomsCreateRequestPayload = models::NewRoom;
+
+impl RoomsCreateRequest {
+    pub fn build_response(self, room: &models::Room) -> RoomsCreateResponse {
+        RoomsCreateResponse {
+            payload: RoomsCreateResponsePayload {
+                id: room.id.to_string(),
+                data: RoomsCreateResponseData {
+                    label: Some(room.label.clone()), // FIXME: avoid clone()
+                },
+            },
+            cid: self.cid,
+        }
+    }
+}
+
+#[derive(Debug, PartialEq, Serialize, Deserialize)]
+pub struct RoomsCreateResponse {
+    payload: RoomsCreateResponsePayload,
+    cid: String,
+}
+
+#[derive(Debug, PartialEq, Serialize, Deserialize)]
+struct RoomsCreateResponsePayload {
+    id: String,
+    data: RoomsCreateResponseData,
+}
+
+type RoomsCreateResponseData = RoomsCreateRequestPayload;
 
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
 pub struct Envelope {

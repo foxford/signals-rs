@@ -1,4 +1,5 @@
 use nom::alphanumeric;
+use std::fmt;
 use std::str::FromStr;
 
 use errors::*;
@@ -58,6 +59,43 @@ pub struct AgentTopic {
 enum AgentTopicKind {
     In,
     Out,
+}
+
+impl AgentTopic {
+    pub fn get_reverse(&self) -> AgentTopic {
+        let kind = match self.kind {
+            AgentTopicKind::In => AgentTopicKind::Out,
+            AgentTopicKind::Out => AgentTopicKind::In,
+        };
+
+        AgentTopic {
+            kind,
+            agent: self.agent.clone(),
+            version: self.version.clone(),
+            room: self.room.clone(),
+        }
+    }
+}
+
+impl fmt::Display for AgentTopic {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let kind = self.kind.to_string().to_lowercase();
+        let mut topic = format!(
+            "agents/{}/{}/signals.netology-group.services/api/{}/rooms",
+            self.agent, kind, self.version
+        );
+        if let Some(ref room) = self.room {
+            topic.push_str("/");
+            topic.push_str(room);
+        }
+        f.pad(&topic)
+    }
+}
+
+impl fmt::Display for AgentTopicKind {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{:?}", self)
+    }
 }
 
 #[cfg(test)]
@@ -134,5 +172,21 @@ mod tests {
 
         let topic = Topic::parse("foo");
         assert!(topic.is_err());
+    }
+
+    #[test]
+    fn get_reverse_topic() {
+        let out_topic_str = "agents/123/out/signals.netology-group.services/api/v1/rooms";
+        let out_topic = Topic::parse(out_topic_str).unwrap();
+
+        match out_topic {
+            Topic::Agent(t) => {
+                let in_topic = t.get_reverse();
+                let in_topic_str = "agents/123/in/signals.netology-group.services/api/v1/rooms";
+
+                assert_eq!(in_topic_str, format!("{}", in_topic));
+            }
+            _ => assert!(false),
+        }
     }
 }
