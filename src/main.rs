@@ -116,6 +116,16 @@ fn handle_message(client: &mut MqttClient, mqtt_msg: MqttMessage) -> Result<()> 
                     let topic = t.get_reverse().to_string();
                     Ok(client.publish(&topic, QoS::Level1, payload.into_bytes())?)
                 }
+                Message::RoomsListRequest(req) => {
+                    let rooms = rooms::table.load::<models::Room>(&conn)?;
+
+                    let resp = req.build_response(&rooms);
+                    let resp = Message::RoomsListResponse(resp);
+                    let payload = serde_json::to_string(&resp).unwrap();
+
+                    let topic = t.get_reverse().to_string();
+                    Ok(client.publish(&topic, QoS::Level1, payload.into_bytes())?)
+                }
                 _ => Err(ErrorKind::BadRequest)?,
             },
         },

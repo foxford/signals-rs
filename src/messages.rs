@@ -10,6 +10,8 @@ pub enum Message {
     Pong,
     RoomsCreateRequest(RoomsCreateRequest),
     RoomsCreateResponse(RoomsCreateResponse),
+    RoomsListRequest(RoomsListRequest),
+    RoomsListResponse(RoomsListResponse),
 }
 
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
@@ -47,6 +49,46 @@ struct RoomsCreateResponsePayload {
 }
 
 type RoomsCreateResponseData = RoomsCreateRequestPayload;
+
+#[derive(Debug, PartialEq, Serialize, Deserialize)]
+pub struct RoomsListRequest {
+    cid: String,
+}
+
+impl RoomsListRequest {
+    pub fn build_response(self, rooms: &Vec<models::Room>) -> RoomsListResponse {
+        let payload: Vec<RoomsListResponsePayload> = rooms
+            .iter()
+            .map(|room| {
+                RoomsListResponsePayload {
+                    id: room.id.to_string(),
+                    data: RoomsListResponseData {
+                        label: Some(room.label.clone()), // FIXME: avoid clone()
+                    },
+                }
+            })
+            .collect();
+
+        RoomsListResponse {
+            payload: payload,
+            cid: self.cid,
+        }
+    }
+}
+
+#[derive(Debug, PartialEq, Serialize, Deserialize)]
+pub struct RoomsListResponse {
+    payload: Vec<RoomsListResponsePayload>,
+    cid: String,
+}
+
+#[derive(Debug, PartialEq, Serialize, Deserialize)]
+struct RoomsListResponsePayload {
+    id: String,
+    data: RoomsListResponseData,
+}
+
+type RoomsListResponseData = RoomsCreateResponseData;
 
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
 pub struct Envelope {
