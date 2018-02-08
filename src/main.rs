@@ -107,6 +107,14 @@ fn handle_message(client: &mut MqttClient, mqtt_msg: MqttMessage) -> Result<()> 
                     .map_err(|_| ErrorKind::NotFound)?;
 
                 match msg {
+                    Message::RoomsReadRequest(req) => {
+                        let resp = req.build_response(&room);
+                        let resp = Message::RoomsReadResponse(resp);
+                        let payload = serde_json::to_string(&resp).unwrap();
+
+                        let topic = t.get_reverse().to_string();
+                        Ok(client.publish(&topic, QoS::Level1, payload.into_bytes())?)
+                    }
                     Message::RoomsDeleteRequest(req) => {
                         diesel::delete(&room).execute(&conn)?;
 

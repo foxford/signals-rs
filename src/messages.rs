@@ -8,8 +8,11 @@ use models;
 pub enum Message {
     Ping,
     Pong,
+
     RoomsCreateRequest(RoomsCreateRequest),
     RoomsCreateResponse(RoomsCreateResponse),
+    RoomsReadRequest(RoomsReadRequest),
+    RoomsReadResponse(RoomsReadResponse),
     RoomsDeleteRequest(RoomsDeleteRequest),
     RoomsDeleteResponse(RoomsDeleteResponse),
     RoomsListRequest(RoomsListRequest),
@@ -56,19 +59,19 @@ type RoomsCreateResponseData = RoomsCreateRequestPayload;
 
 // RoomsCreate
 
-// RoomsDelete
+// RoomsRead
 
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
-pub struct RoomsDeleteRequest {
+pub struct RoomsReadRequest {
     cid: String,
 }
 
-impl RoomsDeleteRequest {
-    pub fn build_response(self, room: &models::Room) -> RoomsDeleteResponse {
-        RoomsDeleteResponse {
-            payload: RoomsDeleteResponsePayload {
+impl RoomsReadRequest {
+    pub fn build_response(self, room: &models::Room) -> RoomsReadResponse {
+        RoomsReadResponse {
+            payload: RoomsReadResponsePayload {
                 id: room.id.to_string(),
-                data: RoomsDeleteResponseData {
+                data: RoomsReadResponseData {
                     label: Some(room.label.clone()), // FIXME: avoid clone()
                 },
             },
@@ -78,13 +81,20 @@ impl RoomsDeleteRequest {
 }
 
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
-pub struct RoomsDeleteResponse {
-    payload: RoomsDeleteResponsePayload,
+pub struct RoomsReadResponse {
+    payload: RoomsReadResponsePayload,
     cid: String,
 }
 
-type RoomsDeleteResponsePayload = RoomsListResponsePayload;
-type RoomsDeleteResponseData = RoomsListResponseData;
+type RoomsReadResponsePayload = RoomsCreateResponsePayload;
+type RoomsReadResponseData = RoomsCreateResponseData;
+
+// RoomsRead
+
+// RoomsDelete
+
+pub type RoomsDeleteRequest = RoomsReadRequest;
+pub type RoomsDeleteResponse = RoomsReadResponse;
 
 // RoomsDelete
 
@@ -122,13 +132,8 @@ pub struct RoomsListResponse {
     cid: String,
 }
 
-#[derive(Debug, PartialEq, Serialize, Deserialize)]
-struct RoomsListResponsePayload {
-    id: String,
-    data: RoomsListResponseData,
-}
-
-type RoomsListResponseData = RoomsCreateResponseData;
+type RoomsListResponsePayload = RoomsReadResponsePayload;
+type RoomsListResponseData = RoomsReadResponseData;
 
 // RoomsList
 
