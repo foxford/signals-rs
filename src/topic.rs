@@ -1,6 +1,7 @@
-use nom::alphanumeric;
+use nom::{alphanumeric, is_hex_digit};
 use std::fmt;
 use std::str::FromStr;
+use uuid::Uuid;
 
 use errors::*;
 
@@ -15,23 +16,37 @@ named!(pong_topic<&str, Topic>,
 named!(agent_topic<&str, Topic>,
     do_parse!(
         tag_s!("agents/") >>
-        agent: map_res!(alphanumeric, FromStr::from_str) >>
+        agent_id: uuid >>
         tag_s!("/") >>
         kind: alt!(map!(tag_s!("in"), |_| AgentTopicKind::In) | map!(tag_s!("out"), |_| AgentTopicKind::Out)) >>
         tag_s!("/signals.netology-group.services/api/") >>
         version: map_res!(alphanumeric, FromStr::from_str) >>
         tag_s!("/rooms") >>
-        room: opt!(complete!(preceded!(
+        room_id: opt!(complete!(preceded!(
             tag_s!("/"),
-            map_res!(alphanumeric, FromStr::from_str)
+            uuid
         ))) >>
 
-        (Topic::Agent(AgentTopic { kind, agent, version, room }))
+        (Topic::Agent(AgentTopic { kind, agent_id, version, room_id }))
     )
 );
 
 named!(topic<&str, Topic>,
     alt!(ping_topic | pong_topic | agent_topic)
+);
+
+named!(uuid<&str, Uuid>,
+    map_res!(recognize!(tuple!(
+        verify!(take_while_s!(|chr| is_hex_digit(chr as u8)), |s: &str| s.len() == 8 ),
+        tag_s!("-"),
+        verify!(take_while_s!(|chr| is_hex_digit(chr as u8)), |s: &str| s.len() == 4 ),
+        tag_s!("-"),
+        verify!(take_while_s!(|chr| is_hex_digit(chr as u8)), |s: &str| s.len() == 4 ),
+        tag_s!("-"),
+        verify!(take_while_s!(|chr| is_hex_digit(chr as u8)), |s: &str| s.len() == 4 ),
+        tag_s!("-"),
+        verify!(take_while_s!(|chr| is_hex_digit(chr as u8)), |s: &str| s.len() == 12 )
+    )), FromStr::from_str)
 );
 
 #[derive(Debug, PartialEq)]
@@ -50,9 +65,9 @@ impl Topic {
 #[derive(Debug, PartialEq)]
 pub struct AgentTopic {
     kind: AgentTopicKind,
-    agent: String,
+    agent_id: Uuid,
     version: String,
-    pub room: Option<String>,
+    pub room_id: Option<Uuid>,
 }
 
 #[derive(Debug, PartialEq)]
@@ -70,9 +85,9 @@ impl AgentTopic {
 
         AgentTopic {
             kind,
-            agent: self.agent.clone(),
+            agent_id: self.agent_id.clone(),
             version: self.version.clone(),
-            room: self.room.clone(),
+            room_id: self.room_id.clone(),
         }
     }
 }
@@ -82,11 +97,11 @@ impl fmt::Display for AgentTopic {
         let kind = self.kind.to_string().to_lowercase();
         let mut topic = format!(
             "agents/{}/{}/signals.netology-group.services/api/{}/rooms",
-            self.agent, kind, self.version
+            self.agent_id, kind, self.version
         );
-        if let Some(ref room) = self.room {
+        if let Some(room_id) = self.room_id {
             topic.push_str("/");
-            topic.push_str(room);
+            topic.push_str(&room_id.hyphenated().to_string());
         }
         f.pad(&topic)
     }
@@ -105,34 +120,35 @@ mod tests {
 
     #[test]
     fn parse_agent_topic() {
-        let topic = agent_topic("agents/123/out/signals.netology-group.services/api/v1/rooms");
+        let topic = agent_topic("agents/e19c94cf-53eb-4048-9c94-7ae74ff6d912/out/signals.netology-group.services/api/v1/rooms");
         let topic_exp = Topic::Agent(AgentTopic {
             kind: AgentTopicKind::Out,
-            agent: "123".to_string(),
+            agent_id: Uuid::parse_str("e19c94cf-53eb-4048-9c94-7ae74ff6d912").unwrap(),
             version: "v1".to_string(),
-            room: None,
+            room_id: None,
         });
         assert_eq!(topic, Done("", topic_exp));
 
-        let topic = agent_topic("agents/123/out/signals.netology-group.services/api/v1/rooms/");
+        let topic = agent_topic("agents/e19c94cf-53eb-4048-9c94-7ae74ff6d912/out/signals.netology-group.services/api/v1/rooms/");
         let topic_exp = Topic::Agent(AgentTopic {
             kind: AgentTopicKind::Out,
-            agent: "123".to_string(),
+            agent_id: Uuid::parse_str("e19c94cf-53eb-4048-9c94-7ae74ff6d912").unwrap(),
             version: "v1".to_string(),
-            room: None,
+            room_id: None,
         });
         assert_eq!(topic, Done("/", topic_exp));
 
-        let topic = agent_topic("agents/123/out/signals.netology-group.services/api/v1/rooms/456");
+        let topic = agent_topic("agents/e19c94cf-53eb-4048-9c94-7ae74ff6d912/out/signals.netology-group.services/api/v1/rooms/058df470-73ea-43a4-b36c-e4615cad468e");
         let topic_exp = Topic::Agent(AgentTopic {
             kind: AgentTopicKind::Out,
-            agent: "123".to_string(),
+            agent_id: Uuid::parse_str("e19c94cf-53eb-4048-9c94-7ae74ff6d912").unwrap(),
             version: "v1".to_string(),
-            room: Some("456".to_string()),
+            room_id: Some(Uuid::parse_str("058df470-73ea-43a4-b36c-e4615cad468e").unwrap()),
         });
         assert_eq!(topic, Done("", topic_exp));
 
-        let topic = agent_topic("agents/123/out/signals/api/v1/rooms/456");
+        let topic =
+            agent_topic("agents/e19c94cf-53eb-4048-9c94-7ae74ff6d912/out/signals/api/v1/rooms/456");
         assert!(topic.is_err());
     }
 
@@ -150,14 +166,20 @@ mod tests {
 
     #[test]
     fn parse_topic() {
-        let topic = Topic::parse("agents/123/out/signals.netology-group.services/api/v1/rooms/456");
+        let topic = Topic::parse("agents/e19c94cf-53eb-4048-9c94-7ae74ff6d912/out/signals.netology-group.services/api/v1/rooms/058df470-73ea-43a4-b36c-e4615cad468e");
         assert!(topic.is_ok());
 
         if let Topic::Agent(t) = topic.unwrap() {
             assert_eq!(t.kind, AgentTopicKind::Out);
-            assert_eq!(t.agent, "123");
+            assert_eq!(
+                t.agent_id,
+                Uuid::parse_str("e19c94cf-53eb-4048-9c94-7ae74ff6d912").unwrap()
+            );
             assert_eq!(t.version, "v1");
-            assert_eq!(t.room, Some("456".to_string()));
+            assert_eq!(
+                t.room_id,
+                Some(Uuid::parse_str("058df470-73ea-43a4-b36c-e4615cad468e").unwrap())
+            );
         } else {
             assert!(false);
         }
@@ -176,17 +198,30 @@ mod tests {
 
     #[test]
     fn get_reverse_topic() {
-        let out_topic_str = "agents/123/out/signals.netology-group.services/api/v1/rooms";
+        let out_topic_str = "agents/e19c94cf-53eb-4048-9c94-7ae74ff6d912/out/signals.netology-group.services/api/v1/rooms";
         let out_topic = Topic::parse(out_topic_str).unwrap();
 
         match out_topic {
             Topic::Agent(t) => {
                 let in_topic = t.get_reverse();
-                let in_topic_str = "agents/123/in/signals.netology-group.services/api/v1/rooms";
+                let in_topic_str = "agents/e19c94cf-53eb-4048-9c94-7ae74ff6d912/in/signals.netology-group.services/api/v1/rooms";
 
                 assert_eq!(in_topic_str, format!("{}", in_topic));
             }
             _ => assert!(false),
         }
+    }
+
+    #[test]
+    fn parse_uuid() {
+        let uuid_str = "7a648f41-bf0a-40cb-b844-16a58f0bff11";
+        let expected_uuid = Uuid::parse_str(uuid_str).unwrap();
+        assert_eq!(uuid(uuid_str), Done("", expected_uuid));
+
+        use nom::ErrorKind::Verify;
+        use nom::IResult::Error;
+
+        let uuid_str = "7a648f41-bf0a-40cb-b844-16a58f0bff1z";
+        assert_eq!(uuid(uuid_str), Error(Verify));
     }
 }

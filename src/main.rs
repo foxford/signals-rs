@@ -99,7 +99,7 @@ fn handle_message(client: &mut MqttClient, mqtt_msg: MqttMessage) -> Result<()> 
             _ => unimplemented!(),
         },
         Topic::Pong => unreachable!(),
-        Topic::Agent(t) => match t.room {
+        Topic::Agent(t) => match t.room_id {
             Some(_room) => unimplemented!(),
             None => match msg {
                 Message::RoomsCreateRequest(req) => {
