@@ -13,6 +13,8 @@ pub enum Message {
     RoomsCreateResponse(RoomsCreateResponse),
     RoomsReadRequest(RoomsReadRequest),
     RoomsReadResponse(RoomsReadResponse),
+    RoomsUpdateRequest(RoomsUpdateRequest),
+    RoomsUpdateResponse(RoomsUpdateResponse),
     RoomsDeleteRequest(RoomsDeleteRequest),
     RoomsDeleteResponse(RoomsDeleteResponse),
     RoomsListRequest(RoomsListRequest),
@@ -90,6 +92,13 @@ type RoomsReadResponsePayload = RoomsCreateResponsePayload;
 type RoomsReadResponseData = RoomsCreateResponseData;
 
 // RoomsRead
+
+// RoomsUpdate
+
+pub type RoomsUpdateRequest = RoomsCreateRequest;
+pub type RoomsUpdateResponse = RoomsCreateResponse;
+
+// RoomsUpdate
 
 // RoomsDelete
 

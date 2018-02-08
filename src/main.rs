@@ -115,6 +115,17 @@ fn handle_message(client: &mut MqttClient, mqtt_msg: MqttMessage) -> Result<()> 
                         let topic = t.get_reverse().to_string();
                         Ok(client.publish(&topic, QoS::Level1, payload.into_bytes())?)
                     }
+                    Message::RoomsUpdateRequest(req) => {
+                        let room: models::Room =
+                            diesel::update(&room).set(&req.payload).get_result(&conn)?;
+
+                        let resp = req.build_response(&room);
+                        let resp = Message::RoomsUpdateResponse(resp);
+                        let payload = serde_json::to_string(&resp).unwrap();
+
+                        let topic = t.get_reverse().to_string();
+                        Ok(client.publish(&topic, QoS::Level1, payload.into_bytes())?)
+                    }
                     Message::RoomsDeleteRequest(req) => {
                         diesel::delete(&room).execute(&conn)?;
 

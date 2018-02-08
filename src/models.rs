@@ -7,7 +7,7 @@ pub struct Room {
     pub label: String,
 }
 
-#[derive(Insertable, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(AsChangeset, Insertable, Debug, PartialEq, Serialize, Deserialize)]
 #[table_name = "rooms"]
 pub struct NewRoom {
     pub label: Option<String>,
