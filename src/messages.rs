@@ -10,9 +10,13 @@ pub enum Message {
     Pong,
     RoomsCreateRequest(RoomsCreateRequest),
     RoomsCreateResponse(RoomsCreateResponse),
+    RoomsDeleteRequest(RoomsDeleteRequest),
+    RoomsDeleteResponse(RoomsDeleteResponse),
     RoomsListRequest(RoomsListRequest),
     RoomsListResponse(RoomsListResponse),
 }
+
+// RoomsCreate
 
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
 pub struct RoomsCreateRequest {
@@ -49,6 +53,42 @@ struct RoomsCreateResponsePayload {
 }
 
 type RoomsCreateResponseData = RoomsCreateRequestPayload;
+
+// RoomsCreate
+
+// RoomsDelete
+
+#[derive(Debug, PartialEq, Serialize, Deserialize)]
+pub struct RoomsDeleteRequest {
+    cid: String,
+}
+
+impl RoomsDeleteRequest {
+    pub fn build_response(self, room: &models::Room) -> RoomsDeleteResponse {
+        RoomsDeleteResponse {
+            payload: RoomsDeleteResponsePayload {
+                id: room.id.to_string(),
+                data: RoomsDeleteResponseData {
+                    label: Some(room.label.clone()), // FIXME: avoid clone()
+                },
+            },
+            cid: self.cid,
+        }
+    }
+}
+
+#[derive(Debug, PartialEq, Serialize, Deserialize)]
+pub struct RoomsDeleteResponse {
+    payload: RoomsDeleteResponsePayload,
+    cid: String,
+}
+
+type RoomsDeleteResponsePayload = RoomsListResponsePayload;
+type RoomsDeleteResponseData = RoomsListResponseData;
+
+// RoomsDelete
+
+// RoomsList
 
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
 pub struct RoomsListRequest {
@@ -89,6 +129,8 @@ struct RoomsListResponsePayload {
 }
 
 type RoomsListResponseData = RoomsCreateResponseData;
+
+// RoomsList
 
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
 pub struct Envelope {

@@ -1,7 +1,7 @@
 use schema::rooms;
 use uuid::Uuid;
 
-#[derive(Queryable, Debug)]
+#[derive(Identifiable, Queryable, Debug)]
 pub struct Room {
     pub id: Uuid,
     pub label: String,

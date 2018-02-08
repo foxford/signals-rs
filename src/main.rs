@@ -100,7 +100,26 @@ fn handle_message(client: &mut MqttClient, mqtt_msg: MqttMessage) -> Result<()> 
         },
         Topic::Pong => unreachable!(),
         Topic::Agent(t) => match t.room_id {
-            Some(_room) => unimplemented!(),
+            Some(room_id) => {
+                let room: models::Room = rooms::table
+                    .find(room_id)
+                    .first(&conn)
+                    .map_err(|_| ErrorKind::NotFound)?;
+
+                match msg {
+                    Message::RoomsDeleteRequest(req) => {
+                        diesel::delete(&room).execute(&conn)?;
+
+                        let resp = req.build_response(&room);
+                        let resp = Message::RoomsDeleteResponse(resp);
+                        let payload = serde_json::to_string(&resp).unwrap();
+
+                        let topic = t.get_reverse().to_string();
+                        Ok(client.publish(&topic, QoS::Level1, payload.into_bytes())?)
+                    }
+                    _ => unimplemented!(),
+                }
+            }
             None => match msg {
                 Message::RoomsCreateRequest(req) => {
                     let room: models::Room = {
