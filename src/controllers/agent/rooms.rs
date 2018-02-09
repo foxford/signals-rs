@@ -9,7 +9,7 @@ use errors::*;
 use messages::{Envelope, Message};
 use models;
 use schema::rooms;
-use topic::{AgentTopic, Reversible, Topic};
+use topic::{AgentTopic, Topic};
 
 pub struct Controller;
 
