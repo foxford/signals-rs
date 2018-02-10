@@ -1,5 +1,5 @@
 [package]
-name = "signals-rs"
+name = "signals"
 version = "0.1.0"
 authors = ["Aleksey Ivanov <ialexxei@gmail.com>"]
 
