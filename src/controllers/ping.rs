@@ -4,6 +4,7 @@ use serde_json;
 use controllers::{Response, TopicController};
 use errors::*;
 use messages::{Envelope, Message};
+use topic::Topic;
 
 pub struct PingController;
 
@@ -17,7 +18,7 @@ impl TopicController for PingController {
                 let payload = serde_json::to_string(&Message::Pong).unwrap();
 
                 Ok(Response {
-                    topic: "pong".to_string(),
+                    topic: Topic::Pong,
                     qos: QoS::Level0,
                     payload: payload.into_bytes(),
                 })

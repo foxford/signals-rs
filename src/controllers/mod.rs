@@ -10,8 +10,7 @@ mod agent;
 mod ping;
 
 pub struct Response {
-    // TODO: try with Topic type
-    pub topic: String,
+    pub topic: Topic,
     pub qos: QoS,
     pub payload: Vec<u8>,
 }

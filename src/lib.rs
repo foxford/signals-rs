@@ -84,5 +84,5 @@ fn handle_message(client: &mut MqttClient, mqtt_msg: MqttMessage) -> Result<()> 
     let ctrl = MainController::new(&topic);
     let res = ctrl.call(envelope)?;
 
-    Ok(client.publish(&res.topic, res.qos, res.payload)?)
+    Ok(client.publish(&res.topic.to_string(), res.qos, res.payload)?)
 }

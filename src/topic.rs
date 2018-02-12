@@ -62,6 +62,17 @@ impl Topic {
     }
 }
 
+impl fmt::Display for Topic {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let value: String = match *self {
+            Topic::Agent(ref t) => t.to_string(),
+            _ => format!("{:?}", self).to_lowercase(),
+        };
+
+        f.write_str(&value)
+    }
+}
+
 #[derive(Debug, PartialEq)]
 pub struct AgentTopic {
     kind: AgentTopicKind,
@@ -103,7 +114,7 @@ impl fmt::Display for AgentTopic {
             topic.push_str("/");
             topic.push_str(&room_id.hyphenated().to_string());
         }
-        f.pad(&topic)
+        f.write_str(&topic)
     }
 }
 
@@ -223,5 +234,23 @@ mod tests {
 
         let uuid_str = "7a648f41-bf0a-40cb-b844-16a58f0bff1z";
         assert_eq!(uuid(uuid_str), Error(Verify));
+    }
+
+    #[test]
+    fn display_topic() {
+        let topic = Topic::Ping;
+        assert_eq!(topic.to_string(), "ping");
+
+        let topic = Topic::Pong;
+        assert_eq!(topic.to_string(), "pong");
+
+        let topic = Topic::Agent(AgentTopic {
+            kind: AgentTopicKind::Out,
+            agent_id: Uuid::parse_str("e19c94cf-53eb-4048-9c94-7ae74ff6d912").unwrap(),
+            version: "v1".to_string(),
+            room_id: Some(Uuid::parse_str("058df470-73ea-43a4-b36c-e4615cad468e").unwrap()),
+        });
+        let expected = "agents/e19c94cf-53eb-4048-9c94-7ae74ff6d912/out/signals.netology-group.services/api/v1/rooms/058df470-73ea-43a4-b36c-e4615cad468e";
+        assert_eq!(topic.to_string(), expected);
     }
 }

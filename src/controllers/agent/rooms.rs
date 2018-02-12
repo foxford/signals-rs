@@ -9,7 +9,7 @@ use errors::*;
 use messages::{Envelope, Message};
 use models;
 use schema::rooms;
-use topic::AgentTopic;
+use topic::{AgentTopic, Topic};
 
 pub struct Controller;
 
@@ -66,9 +66,9 @@ impl CrudlController for Controller {
                 let resp = Message::RoomsCreateResponse(resp);
                 let payload = serde_json::to_string(&resp).unwrap();
 
-                let topic = topic.get_reverse().to_string();
+                let topic = topic.get_reverse();
                 Ok(Response {
-                    topic: topic,
+                    topic: Topic::Agent(topic),
                     qos: QoS::Level1,
                     payload: payload.into_bytes(),
                 })
@@ -86,9 +86,9 @@ impl CrudlController for Controller {
                 let resp = Message::RoomsReadResponse(resp);
                 let payload = serde_json::to_string(&resp).unwrap();
 
-                let topic = topic.get_reverse().to_string();
+                let topic = topic.get_reverse();
                 Ok(Response {
-                    topic: topic,
+                    topic: Topic::Agent(topic),
                     qos: QoS::Level1,
                     payload: payload.into_bytes(),
                 })
@@ -110,9 +110,9 @@ impl CrudlController for Controller {
                 let resp = Message::RoomsUpdateResponse(resp);
                 let payload = serde_json::to_string(&resp).unwrap();
 
-                let topic = topic.get_reverse().to_string();
+                let topic = topic.get_reverse();
                 Ok(Response {
-                    topic: topic,
+                    topic: Topic::Agent(topic),
                     qos: QoS::Level1,
                     payload: payload.into_bytes(),
                 })
@@ -134,9 +134,9 @@ impl CrudlController for Controller {
                 let resp = Message::RoomsDeleteResponse(resp);
                 let payload = serde_json::to_string(&resp).unwrap();
 
-                let topic = topic.get_reverse().to_string();
+                let topic = topic.get_reverse();
                 Ok(Response {
-                    topic: topic,
+                    topic: Topic::Agent(topic),
                     qos: QoS::Level1,
                     payload: payload.into_bytes(),
                 })
@@ -158,9 +158,9 @@ impl CrudlController for Controller {
                 let resp = Message::RoomsListResponse(resp);
                 let payload = serde_json::to_string(&resp).unwrap();
 
-                let topic = topic.get_reverse().to_string();
+                let topic = topic.get_reverse();
                 Ok(Response {
-                    topic: topic,
+                    topic: Topic::Agent(topic),
                     qos: QoS::Level1,
                     payload: payload.into_bytes(),
                 })
