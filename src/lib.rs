@@ -13,17 +13,16 @@ extern crate serde_derive;
 extern crate serde_json;
 extern crate uuid;
 
-use diesel::pg::PgConnection;
-use diesel::prelude::*;
 use rumqtt::{Message as MqttMessage, MqttCallback, MqttClient, MqttOptions, QoS};
 use std::process;
 use std::sync::{mpsc, Mutex};
 
+use controllers::MainController;
 use errors::*;
-use messages::{Envelope, Message};
-use schema::rooms;
+use messages::Envelope;
 use topic::Topic;
 
+mod controllers;
 mod errors;
 mod messages;
 mod topic;
@@ -73,99 +72,17 @@ fn subscribe(client: &mut MqttClient) -> Result<()> {
 }
 
 fn handle_message(client: &mut MqttClient, mqtt_msg: MqttMessage) -> Result<()> {
-    // FIXME: use connection pool
-    let conn = establish_connection();
-
     println!("Received message: {:?}", mqtt_msg);
+
+    let topic = Topic::parse(&mqtt_msg.topic)?;
+    println!("Topic: {:?}", topic);
+
     let payload = String::from_utf8(mqtt_msg.payload.to_vec())?;
     println!("Payload: {:?}", payload);
 
     let envelope: Envelope = serde_json::from_str(&payload)?;
-    let msg = envelope.message()?;
-    let topic = Topic::parse(&mqtt_msg.topic)?;
-    println!("Topic: {:?}", topic);
+    let ctrl = MainController::new(&topic);
+    let res = ctrl.call(envelope)?;
 
-    match topic {
-        Topic::Ping => match msg {
-            Message::Ping => {
-                let payload = serde_json::to_string(&Message::Pong).unwrap();
-                Ok(client.publish("pong", QoS::Level0, payload.into_bytes())?)
-            }
-            _ => unimplemented!(),
-        },
-        Topic::Pong => unreachable!(),
-        Topic::Agent(t) => match t.room_id {
-            Some(room_id) => {
-                let room: models::Room = rooms::table
-                    .find(room_id)
-                    .first(&conn)
-                    .map_err(|_| ErrorKind::NotFound)?;
-
-                match msg {
-                    Message::RoomsReadRequest(req) => {
-                        let resp = req.build_response(&room);
-                        let resp = Message::RoomsReadResponse(resp);
-                        let payload = serde_json::to_string(&resp).unwrap();
-
-                        let topic = t.get_reverse().to_string();
-                        Ok(client.publish(&topic, QoS::Level1, payload.into_bytes())?)
-                    }
-                    Message::RoomsUpdateRequest(req) => {
-                        let room: models::Room =
-                            diesel::update(&room).set(&req.payload).get_result(&conn)?;
-
-                        let resp = req.build_response(&room);
-                        let resp = Message::RoomsUpdateResponse(resp);
-                        let payload = serde_json::to_string(&resp).unwrap();
-
-                        let topic = t.get_reverse().to_string();
-                        Ok(client.publish(&topic, QoS::Level1, payload.into_bytes())?)
-                    }
-                    Message::RoomsDeleteRequest(req) => {
-                        diesel::delete(&room).execute(&conn)?;
-
-                        let resp = req.build_response(&room);
-                        let resp = Message::RoomsDeleteResponse(resp);
-                        let payload = serde_json::to_string(&resp).unwrap();
-
-                        let topic = t.get_reverse().to_string();
-                        Ok(client.publish(&topic, QoS::Level1, payload.into_bytes())?)
-                    }
-                    _ => unimplemented!(),
-                }
-            }
-            None => match msg {
-                Message::RoomsCreateRequest(req) => {
-                    let room: models::Room = {
-                        diesel::insert_into(rooms::table)
-                            .values(&req.payload)
-                            .get_result(&conn)?
-                    };
-
-                    let resp = req.build_response(&room);
-                    let resp = Message::RoomsCreateResponse(resp);
-                    let payload = serde_json::to_string(&resp).unwrap();
-
-                    let topic = t.get_reverse().to_string();
-                    Ok(client.publish(&topic, QoS::Level1, payload.into_bytes())?)
-                }
-                Message::RoomsListRequest(req) => {
-                    let rooms = rooms::table.load::<models::Room>(&conn)?;
-
-                    let resp = req.build_response(&rooms);
-                    let resp = Message::RoomsListResponse(resp);
-                    let payload = serde_json::to_string(&resp).unwrap();
-
-                    let topic = t.get_reverse().to_string();
-                    Ok(client.publish(&topic, QoS::Level1, payload.into_bytes())?)
-                }
-                _ => Err(ErrorKind::BadRequest)?,
-            },
-        },
-    }
-}
-
-fn establish_connection() -> PgConnection {
-    let database_url = std::env::var("DATABASE_URL").expect("DATABASE_URL must be set");
-    PgConnection::establish(&database_url).unwrap()
+    Ok(client.publish(&res.topic, res.qos, res.payload)?)
 }
