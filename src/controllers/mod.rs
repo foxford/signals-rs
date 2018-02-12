@@ -4,7 +4,7 @@ use controllers::agent::AgentController;
 use controllers::ping::PingController;
 use errors::*;
 use messages::Envelope;
-use topic::Topic;
+use topic::{Reversible, Topic};
 
 mod agent;
 mod ping;
@@ -26,21 +26,20 @@ impl<'a> MainController<'a> {
 
     pub fn call(&self, envelope: Envelope) -> Result<Response> {
         match *self.topic {
-            Topic::Ping => PingController::call(&(), envelope),
+            Topic::Ping(ref t) => PingController::call(t, envelope),
             Topic::Agent(ref topic) => AgentController::call(topic, envelope),
-            _ => unimplemented!(),
         }
     }
 }
 
 trait TopicController {
-    type Topic;
+    type Topic: Reversible;
 
     fn call(topic: &Self::Topic, envelope: Envelope) -> Result<Response>;
 }
 
 trait CrudlController {
-    type Topic;
+    type Topic: Reversible;
     type Resource;
 
     fn create(topic: &Self::Topic, envelope: Envelope) -> Result<Response>;

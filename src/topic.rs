@@ -6,11 +6,13 @@ use uuid::Uuid;
 use errors::*;
 
 named!(ping_topic<&str, Topic>,
-    map!(tag_s!("ping"), |_| Topic::Ping)
-);
-
-named!(pong_topic<&str, Topic>,
-    map!(tag_s!("pong"), |_| Topic::Pong)
+    map!(alt!(tag_s!("ping") | tag_s!("pong")), |kind| {
+        match kind.as_ref() {
+            "ping" => Topic::Ping(PingTopicKind::Ping),
+            "pong" => Topic::Ping(PingTopicKind::Pong),
+            _ => unreachable!(),
+        }
+    })
 );
 
 named!(agent_topic<&str, Topic>,
@@ -32,7 +34,7 @@ named!(agent_topic<&str, Topic>,
 );
 
 named!(topic<&str, Topic>,
-    alt!(ping_topic | pong_topic | agent_topic)
+    alt!(ping_topic | agent_topic)
 );
 
 named!(uuid<&str, Uuid>,
@@ -51,8 +53,7 @@ named!(uuid<&str, Uuid>,
 
 #[derive(Debug, PartialEq)]
 pub enum Topic {
-    Ping,
-    Pong,
+    Ping(PingTopicKind),
     Agent(AgentTopic),
 }
 
@@ -64,11 +65,24 @@ impl Topic {
 
 impl fmt::Display for Topic {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let value: String = match *self {
-            Topic::Agent(ref t) => t.to_string(),
-            _ => format!("{:?}", self).to_lowercase(),
+        let value: &fmt::Display = match *self {
+            Topic::Ping(ref t) => t,
+            Topic::Agent(ref t) => t,
         };
 
+        write!(f, "{}", value)
+    }
+}
+
+#[derive(Debug, PartialEq)]
+pub enum PingTopicKind {
+    Ping,
+    Pong,
+}
+
+impl fmt::Display for PingTopicKind {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let value = format!("{:?}", self).to_lowercase();
         f.write_str(&value)
     }
 }
@@ -79,28 +93,6 @@ pub struct AgentTopic {
     agent_id: Uuid,
     version: String,
     pub room_id: Option<Uuid>,
-}
-
-#[derive(Debug, PartialEq)]
-enum AgentTopicKind {
-    In,
-    Out,
-}
-
-impl AgentTopic {
-    pub fn get_reverse(&self) -> AgentTopic {
-        let kind = match self.kind {
-            AgentTopicKind::In => AgentTopicKind::Out,
-            AgentTopicKind::Out => AgentTopicKind::In,
-        };
-
-        AgentTopic {
-            kind,
-            agent_id: self.agent_id.clone(),
-            version: self.version.clone(),
-            room_id: self.room_id.clone(),
-        }
-    }
 }
 
 impl fmt::Display for AgentTopic {
@@ -118,9 +110,50 @@ impl fmt::Display for AgentTopic {
     }
 }
 
+#[derive(Debug, PartialEq)]
+enum AgentTopicKind {
+    In,
+    Out,
+}
+
 impl fmt::Display for AgentTopicKind {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{:?}", self)
+    }
+}
+
+pub trait Reversible {
+    type Topic;
+
+    fn get_reverse(&self) -> Self::Topic;
+}
+
+impl Reversible for PingTopicKind {
+    type Topic = PingTopicKind;
+
+    fn get_reverse(&self) -> PingTopicKind {
+        match *self {
+            PingTopicKind::Ping => PingTopicKind::Pong,
+            PingTopicKind::Pong => PingTopicKind::Ping,
+        }
+    }
+}
+
+impl Reversible for AgentTopic {
+    type Topic = AgentTopic;
+
+    fn get_reverse(&self) -> AgentTopic {
+        let kind = match self.kind {
+            AgentTopicKind::In => AgentTopicKind::Out,
+            AgentTopicKind::Out => AgentTopicKind::In,
+        };
+
+        AgentTopic {
+            kind,
+            agent_id: self.agent_id.clone(),
+            version: self.version.clone(),
+            room_id: self.room_id.clone(),
+        }
     }
 }
 
@@ -166,13 +199,13 @@ mod tests {
     #[test]
     fn parse_ping_topic() {
         let topic = ping_topic("ping");
-        assert_eq!(topic, Done("", Topic::Ping));
+        assert_eq!(topic, Done("", Topic::Ping(PingTopicKind::Ping)));
     }
 
     #[test]
     fn parse_pong_topic() {
-        let topic = pong_topic("pong");
-        assert_eq!(topic, Done("", Topic::Pong));
+        let topic = ping_topic("pong");
+        assert_eq!(topic, Done("", Topic::Ping(PingTopicKind::Pong)));
     }
 
     #[test]
@@ -197,30 +230,42 @@ mod tests {
 
         let topic = Topic::parse("ping");
         assert!(topic.is_ok());
-        assert_eq!(topic.unwrap(), Topic::Ping);
+        assert_eq!(topic.unwrap(), Topic::Ping(PingTopicKind::Ping));
 
         let topic = Topic::parse("pong");
         assert!(topic.is_ok());
-        assert_eq!(topic.unwrap(), Topic::Pong);
+        assert_eq!(topic.unwrap(), Topic::Ping(PingTopicKind::Pong));
 
         let topic = Topic::parse("foo");
         assert!(topic.is_err());
     }
 
     #[test]
-    fn get_reverse_topic() {
-        let out_topic_str = "agents/e19c94cf-53eb-4048-9c94-7ae74ff6d912/out/signals.netology-group.services/api/v1/rooms";
-        let out_topic = Topic::parse(out_topic_str).unwrap();
+    fn get_reverse_ping_topic() {
+        let ping_topic = PingTopicKind::Ping;
+        let pong_topic = ping_topic.get_reverse();
 
-        match out_topic {
-            Topic::Agent(t) => {
-                let in_topic = t.get_reverse();
-                let in_topic_str = "agents/e19c94cf-53eb-4048-9c94-7ae74ff6d912/in/signals.netology-group.services/api/v1/rooms";
+        assert_eq!(pong_topic, PingTopicKind::Pong);
+    }
 
-                assert_eq!(in_topic_str, format!("{}", in_topic));
-            }
-            _ => assert!(false),
-        }
+    #[test]
+    fn get_reverse_agent_topic() {
+        let out_topic = AgentTopic {
+            kind: AgentTopicKind::Out,
+            agent_id: Uuid::parse_str("e19c94cf-53eb-4048-9c94-7ae74ff6d912").unwrap(),
+            version: "v1".to_string(),
+            room_id: None,
+        };
+        let in_topic = out_topic.get_reverse();
+
+        let expected = AgentTopic {
+            kind: AgentTopicKind::In,
+            agent_id: Uuid::parse_str("e19c94cf-53eb-4048-9c94-7ae74ff6d912").unwrap(),
+            version: "v1".to_string(),
+            room_id: None,
+        };
+
+        assert_eq!(in_topic, expected);
     }
 
     #[test]
@@ -238,10 +283,10 @@ mod tests {
 
     #[test]
     fn display_topic() {
-        let topic = Topic::Ping;
+        let topic = Topic::Ping(PingTopicKind::Ping);
         assert_eq!(topic.to_string(), "ping");
 
-        let topic = Topic::Pong;
+        let topic = Topic::Ping(PingTopicKind::Pong);
         assert_eq!(topic.to_string(), "pong");
 
         let topic = Topic::Agent(AgentTopic {
