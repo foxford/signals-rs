@@ -106,7 +106,7 @@ pub struct AgentTopic {
     agent_id: Uuid,
     version: String,
     pub room_id: Option<Uuid>,
-    resource: Option<Resource>,
+    pub resource: Option<Resource>,
 }
 
 impl AgentTopic {
@@ -161,13 +161,13 @@ impl fmt::Display for AgentTopicKind {
 }
 
 #[derive(Clone, Debug, PartialEq)]
-struct Resource {
-    kind: ResourceKind,
-    id: Option<Uuid>,
+pub struct Resource {
+    pub kind: ResourceKind,
+    pub id: Option<Uuid>,
 }
 
 #[derive(Clone, Debug, PartialEq)]
-enum ResourceKind {
+pub enum ResourceKind {
     Agents,
     Tracks,
 }
