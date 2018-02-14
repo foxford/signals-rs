@@ -82,7 +82,10 @@ fn handle_message(client: &mut MqttClient, mqtt_msg: MqttMessage) -> Result<()> 
 
     let envelope: Envelope = serde_json::from_str(&payload)?;
     let ctrl = MainController::new(&topic);
-    let res = ctrl.call(envelope)?;
 
-    Ok(client.publish(&res.topic.to_string(), res.qos, res.payload)?)
+    for message in ctrl.call(envelope)? {
+        client.publish(&message.topic.to_string(), message.qos, message.payload)?;
+    }
+
+    Ok(())
 }

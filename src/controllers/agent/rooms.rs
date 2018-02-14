@@ -16,7 +16,7 @@ pub struct Controller;
 impl TopicController for Controller {
     type Topic = AgentTopic;
 
-    fn call(topic: &AgentTopic, envelope: Envelope) -> Result<Response> {
+    fn call(topic: &AgentTopic, envelope: Envelope) -> Result<Vec<Response>> {
         let msg = envelope.message()?;
 
         match topic.room_id {
@@ -49,7 +49,7 @@ impl CrudlController for Controller {
     type Topic = AgentTopic;
     type Resource = models::Room;
 
-    fn create(topic: &AgentTopic, envelope: Envelope) -> Result<Response> {
+    fn create(topic: &AgentTopic, envelope: Envelope) -> Result<Vec<Response>> {
         // FIXME: use connection pool
         let conn = establish_connection();
         let msg = envelope.message()?;
@@ -67,17 +67,19 @@ impl CrudlController for Controller {
                 let payload = serde_json::to_string(&resp).unwrap();
 
                 let topic = topic.get_reverse();
-                Ok(Response {
-                    topic: Topic::Agent(topic),
-                    qos: QoS::Level1,
-                    payload: payload.into_bytes(),
-                })
+                Ok(vec![
+                    Response {
+                        topic: Topic::Agent(topic),
+                        qos: QoS::Level1,
+                        payload: payload.into_bytes(),
+                    },
+                ])
             }
             _ => unreachable!(),
         }
     }
 
-    fn read(topic: &AgentTopic, envelope: Envelope, room: models::Room) -> Result<Response> {
+    fn read(topic: &AgentTopic, envelope: Envelope, room: models::Room) -> Result<Vec<Response>> {
         let msg = envelope.message()?;
 
         match msg {
@@ -87,17 +89,19 @@ impl CrudlController for Controller {
                 let payload = serde_json::to_string(&resp).unwrap();
 
                 let topic = topic.get_reverse();
-                Ok(Response {
-                    topic: Topic::Agent(topic),
-                    qos: QoS::Level1,
-                    payload: payload.into_bytes(),
-                })
+                Ok(vec![
+                    Response {
+                        topic: Topic::Agent(topic),
+                        qos: QoS::Level1,
+                        payload: payload.into_bytes(),
+                    },
+                ])
             }
             _ => unreachable!(),
         }
     }
 
-    fn update(topic: &AgentTopic, envelope: Envelope, room: models::Room) -> Result<Response> {
+    fn update(topic: &AgentTopic, envelope: Envelope, room: models::Room) -> Result<Vec<Response>> {
         // FIXME: use connection pool
         let conn = establish_connection();
         let msg = envelope.message()?;
@@ -111,17 +115,19 @@ impl CrudlController for Controller {
                 let payload = serde_json::to_string(&resp).unwrap();
 
                 let topic = topic.get_reverse();
-                Ok(Response {
-                    topic: Topic::Agent(topic),
-                    qos: QoS::Level1,
-                    payload: payload.into_bytes(),
-                })
+                Ok(vec![
+                    Response {
+                        topic: Topic::Agent(topic),
+                        qos: QoS::Level1,
+                        payload: payload.into_bytes(),
+                    },
+                ])
             }
             _ => unreachable!(),
         }
     }
 
-    fn delete(topic: &AgentTopic, envelope: Envelope, room: models::Room) -> Result<Response> {
+    fn delete(topic: &AgentTopic, envelope: Envelope, room: models::Room) -> Result<Vec<Response>> {
         // FIXME: use connection pool
         let conn = establish_connection();
         let msg = envelope.message()?;
@@ -135,17 +141,19 @@ impl CrudlController for Controller {
                 let payload = serde_json::to_string(&resp).unwrap();
 
                 let topic = topic.get_reverse();
-                Ok(Response {
-                    topic: Topic::Agent(topic),
-                    qos: QoS::Level1,
-                    payload: payload.into_bytes(),
-                })
+                Ok(vec![
+                    Response {
+                        topic: Topic::Agent(topic),
+                        qos: QoS::Level1,
+                        payload: payload.into_bytes(),
+                    },
+                ])
             }
             _ => unreachable!(),
         }
     }
 
-    fn list(topic: &AgentTopic, envelope: Envelope) -> Result<Response> {
+    fn list(topic: &AgentTopic, envelope: Envelope) -> Result<Vec<Response>> {
         // FIXME: use connection pool
         let conn = establish_connection();
         let msg = envelope.message()?;
@@ -159,11 +167,13 @@ impl CrudlController for Controller {
                 let payload = serde_json::to_string(&resp).unwrap();
 
                 let topic = topic.get_reverse();
-                Ok(Response {
-                    topic: Topic::Agent(topic),
-                    qos: QoS::Level1,
-                    payload: payload.into_bytes(),
-                })
+                Ok(vec![
+                    Response {
+                        topic: Topic::Agent(topic),
+                        qos: QoS::Level1,
+                        payload: payload.into_bytes(),
+                    },
+                ])
             }
             _ => unreachable!(),
         }

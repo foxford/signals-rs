@@ -14,7 +14,7 @@ pub struct AgentController;
 impl TopicController for AgentController {
     type Topic = AgentTopic;
 
-    fn call(topic: &AgentTopic, envelope: Envelope) -> Result<Response> {
+    fn call(topic: &AgentTopic, envelope: Envelope) -> Result<Vec<Response>> {
         match topic.resource {
             Some(ref resource) => match resource.kind {
                 ResourceKind::Agents => AgentsController::call(topic, envelope),
