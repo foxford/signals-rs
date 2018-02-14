@@ -4,7 +4,7 @@ use errors::*;
 use messages::agent::*;
 use messages::room::*;
 
-mod agent;
+pub mod agent;
 mod room;
 
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
@@ -26,6 +26,7 @@ pub enum Message {
 
     AgentsCreateRequest(AgentsCreateRequest),
     AgentsCreateResponse(AgentsCreateResponse),
+    AgentsCreatedEvent(AgentsCreatedEvent),
     AgentsReadRequest(AgentsReadRequest),
     AgentsReadResponse(AgentsReadResponse),
     AgentsUpdateRequest(AgentsUpdateRequest),

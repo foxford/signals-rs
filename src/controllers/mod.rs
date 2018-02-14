@@ -28,6 +28,7 @@ impl<'a> MainController<'a> {
         match *self.topic {
             Topic::Ping(ref t) => PingController::call(t, envelope),
             Topic::Agent(ref topic) => AgentController::call(topic, envelope),
+            Topic::App(_) => unreachable!(),
         }
     }
 }

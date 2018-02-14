@@ -68,6 +68,7 @@ named!(uuid<&str, Uuid>,
 pub enum Topic {
     Ping(PingTopicKind),
     Agent(AgentTopic),
+    App(AppTopic),
 }
 
 impl Topic {
@@ -81,6 +82,7 @@ impl fmt::Display for Topic {
         let value: &fmt::Display = match *self {
             Topic::Ping(ref t) => t,
             Topic::Agent(ref t) => t,
+            Topic::App(ref t) => t,
         };
 
         write!(f, "{}", value)
@@ -128,10 +130,9 @@ impl AgentTopic {
 
 impl fmt::Display for AgentTopic {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let kind = self.kind.to_string().to_lowercase();
         let mut topic = format!(
             "agents/{}/{}/signals.netology-group.services/api/{}/rooms",
-            self.agent_id, kind, self.version
+            self.agent_id, self.kind, self.version
         );
 
         if let Some(room_id) = self.room_id {
@@ -156,7 +157,8 @@ enum AgentTopicKind {
 
 impl fmt::Display for AgentTopicKind {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{:?}", self)
+        let value = format!("{:?}", self).to_lowercase();
+        f.write_str(&value)
     }
 }
 
@@ -174,8 +176,7 @@ pub enum ResourceKind {
 
 impl fmt::Display for Resource {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let kind = self.kind.to_string().to_lowercase();
-        let mut resource = format!("{}", kind);
+        let mut resource = format!("{}", self.kind);
 
         if let Some(id) = self.id {
             resource.push_str("/");
@@ -188,7 +189,24 @@ impl fmt::Display for Resource {
 
 impl fmt::Display for ResourceKind {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{:?}", self)
+        let value = format!("{:?}", self).to_lowercase();
+        f.write_str(&value)
+    }
+}
+
+#[derive(Debug, PartialEq)]
+pub struct AppTopic {
+    pub room_id: Uuid,
+    pub resource_kind: ResourceKind,
+}
+
+impl fmt::Display for AppTopic {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(
+            f,
+            "apps/signals.netology-group.services/api/v1/rooms/{}/{}",
+            self.room_id, self.resource_kind
+        )
     }
 }
 
@@ -458,6 +476,13 @@ mod tests {
             }),
         });
         let expected = "agents/e19c94cf-53eb-4048-9c94-7ae74ff6d912/out/signals.netology-group.services/api/v1/rooms/058df470-73ea-43a4-b36c-e4615cad468e/agents/c6d2eec6-94ac-4575-9658-10c93b939d9a";
+        assert_eq!(topic.to_string(), expected);
+
+        let topic = Topic::App(AppTopic {
+            room_id: Uuid::parse_str("058df470-73ea-43a4-b36c-e4615cad468e").unwrap(),
+            resource_kind: ResourceKind::Agents,
+        });
+        let expected = "apps/signals.netology-group.services/api/v1/rooms/058df470-73ea-43a4-b36c-e4615cad468e/agents";
         assert_eq!(topic.to_string(), expected);
     }
 }

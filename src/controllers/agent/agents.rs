@@ -7,9 +7,10 @@ use std::env;
 use controllers::{CrudlController, Response, TopicController};
 use errors::*;
 use messages::{Envelope, Message};
+use messages::agent::AgentsCreatedEvent;
 use models;
 use schema::{agents, rooms};
-use topic::{AgentTopic, Topic};
+use topic::{AgentTopic, AppTopic, ResourceKind, Topic};
 
 pub struct Controller;
 
@@ -81,17 +82,34 @@ impl CrudlController for Controller {
                 };
 
                 let resp = req.build_response(&agent);
+                let event = AgentsCreatedEvent {
+                    payload: resp.payload.clone(),
+                };
+
                 let resp = Message::AgentsCreateResponse(resp);
-                let payload = serde_json::to_string(&resp).unwrap();
-                let topic = topic.get_reverse();
+                let event = Message::AgentsCreatedEvent(event);
+
+                let resp_payload = serde_json::to_string(&resp).unwrap();
+                let event_payload = serde_json::to_string(&event).unwrap();
+
+                let resp_topic = topic.get_reverse();
+                let event_topic = AppTopic {
+                    room_id: room.id,
+                    resource_kind: ResourceKind::Agents,
+                };
 
                 // TODO: grant permissions to allow agent to subscribe for apps topic
 
                 Ok(vec![
                     Response {
-                        topic: Topic::Agent(topic),
+                        topic: Topic::Agent(resp_topic),
                         qos: QoS::Level1,
-                        payload: payload.into_bytes(),
+                        payload: resp_payload.into_bytes(),
+                    },
+                    Response {
+                        topic: Topic::App(event_topic),
+                        qos: QoS::Level1,
+                        payload: event_payload.into_bytes(),
                     },
                 ])
             }

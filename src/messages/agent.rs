@@ -8,7 +8,7 @@ pub struct AgentsCreateRequest {
     cid: String,
 }
 
-#[derive(Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct AgentsCreateRequestPayload {
     pub label: Option<String>,
 }
@@ -29,17 +29,22 @@ impl AgentsCreateRequest {
 
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
 pub struct AgentsCreateResponse {
-    payload: AgentsCreateResponsePayload,
+    pub payload: AgentsCreateResponsePayload,
     cid: String,
 }
 
-#[derive(Debug, PartialEq, Serialize, Deserialize)]
-struct AgentsCreateResponsePayload {
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub struct AgentsCreateResponsePayload {
     id: String,
     data: AgentsCreateResponseData,
 }
 
 type AgentsCreateResponseData = AgentsCreateRequestPayload;
+
+#[derive(Debug, PartialEq, Serialize, Deserialize)]
+pub struct AgentsCreatedEvent {
+    pub payload: AgentsCreateResponsePayload,
+}
 
 // AgentsCreate
 
