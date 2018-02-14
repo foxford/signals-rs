@@ -11,18 +11,20 @@ pub struct PingController;
 impl TopicController for PingController {
     type Topic = PingTopicKind;
 
-    fn call(topic: &PingTopicKind, envelope: Envelope) -> Result<Response> {
+    fn call(topic: &PingTopicKind, envelope: Envelope) -> Result<Vec<Response>> {
         let msg = envelope.message()?;
         match msg {
             Message::Ping => {
                 let payload = serde_json::to_string(&Message::Pong).unwrap();
                 let topic = topic.get_reverse();
 
-                Ok(Response {
-                    topic: Topic::Ping(topic),
-                    qos: QoS::Level0,
-                    payload: payload.into_bytes(),
-                })
+                Ok(vec![
+                    Response {
+                        topic: Topic::Ping(topic),
+                        qos: QoS::Level0,
+                        payload: payload.into_bytes(),
+                    },
+                ])
             }
             _ => unimplemented!(),
         }

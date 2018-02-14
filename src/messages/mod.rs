@@ -1,8 +1,10 @@
 use serde_json;
 
 use errors::*;
+use messages::agent::*;
 use messages::room::*;
 
+pub mod agent;
 mod room;
 
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
@@ -21,6 +23,18 @@ pub enum Message {
     RoomsDeleteResponse(RoomsDeleteResponse),
     RoomsListRequest(RoomsListRequest),
     RoomsListResponse(RoomsListResponse),
+
+    AgentsCreateRequest(AgentsCreateRequest),
+    AgentsCreateResponse(AgentsCreateResponse),
+    AgentsCreatedEvent(AgentsCreatedEvent),
+    AgentsReadRequest(AgentsReadRequest),
+    AgentsReadResponse(AgentsReadResponse),
+    AgentsUpdateRequest(AgentsUpdateRequest),
+    AgentsUpdateResponse(AgentsUpdateResponse),
+    AgentsDeleteRequest(AgentsDeleteRequest),
+    AgentsDeleteResponse(AgentsDeleteResponse),
+    AgentsListRequest(AgentsListRequest),
+    AgentsListResponse(AgentsListResponse),
 }
 
 #[derive(Debug, PartialEq, Serialize, Deserialize)]

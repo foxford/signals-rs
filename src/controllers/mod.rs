@@ -24,10 +24,11 @@ impl<'a> MainController<'a> {
         MainController { topic }
     }
 
-    pub fn call(&self, envelope: Envelope) -> Result<Response> {
+    pub fn call(&self, envelope: Envelope) -> Result<Vec<Response>> {
         match *self.topic {
             Topic::Ping(ref t) => PingController::call(t, envelope),
             Topic::Agent(ref topic) => AgentController::call(topic, envelope),
+            Topic::App(_) => unreachable!(),
         }
     }
 }
@@ -35,24 +36,28 @@ impl<'a> MainController<'a> {
 trait TopicController {
     type Topic: Reversible;
 
-    fn call(topic: &Self::Topic, envelope: Envelope) -> Result<Response>;
+    fn call(topic: &Self::Topic, envelope: Envelope) -> Result<Vec<Response>>;
 }
 
 trait CrudlController {
     type Topic: Reversible;
     type Resource;
 
-    fn create(topic: &Self::Topic, envelope: Envelope) -> Result<Response>;
-    fn read(topic: &Self::Topic, envelope: Envelope, resource: Self::Resource) -> Result<Response>;
+    fn create(topic: &Self::Topic, envelope: Envelope) -> Result<Vec<Response>>;
+    fn read(
+        topic: &Self::Topic,
+        envelope: Envelope,
+        resource: Self::Resource,
+    ) -> Result<Vec<Response>>;
     fn update(
         topic: &Self::Topic,
         envelope: Envelope,
         resource: Self::Resource,
-    ) -> Result<Response>;
+    ) -> Result<Vec<Response>>;
     fn delete(
         topic: &Self::Topic,
         envelope: Envelope,
         resource: Self::Resource,
-    ) -> Result<Response>;
-    fn list(topic: &Self::Topic, envelope: Envelope) -> Result<Response>;
+    ) -> Result<Vec<Response>>;
+    fn list(topic: &Self::Topic, envelope: Envelope) -> Result<Vec<Response>>;
 }

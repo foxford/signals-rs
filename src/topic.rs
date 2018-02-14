@@ -6,13 +6,10 @@ use uuid::Uuid;
 use errors::*;
 
 named!(ping_topic<&str, Topic>,
-    map!(alt!(tag_s!("ping") | tag_s!("pong")), |kind| {
-        match kind.as_ref() {
-            "ping" => Topic::Ping(PingTopicKind::Ping),
-            "pong" => Topic::Ping(PingTopicKind::Pong),
-            _ => unreachable!(),
-        }
-    })
+    alt!(
+        map!(tag_s!("ping"), |_| Topic::Ping(PingTopicKind::Ping)) |
+        map!(tag_s!("pong"), |_| Topic::Ping(PingTopicKind::Pong))
+    )
 );
 
 named!(agent_topic<&str, Topic>,
@@ -28,8 +25,24 @@ named!(agent_topic<&str, Topic>,
             tag_s!("/"),
             uuid
         ))) >>
+        resource: opt!(complete!(preceded!(
+            tag_s!("/"),
+            topic_resource
+        ))) >>
 
-        (Topic::Agent(AgentTopic { kind, agent_id, version, room_id }))
+        (Topic::Agent(AgentTopic { kind, agent_id, version, room_id, resource }))
+    )
+);
+
+named!(topic_resource<&str, Resource>,
+    do_parse!(
+        kind: alt!(map!(tag_s!("agents"), |_| ResourceKind::Agents) | map!(tag_s!("tracks"), |_| ResourceKind::Tracks)) >>
+        id: opt!(complete!(preceded!(
+            tag_s!("/"),
+            uuid
+        ))) >>
+
+        (Resource { kind, id } )
     )
 );
 
@@ -55,6 +68,7 @@ named!(uuid<&str, Uuid>,
 pub enum Topic {
     Ping(PingTopicKind),
     Agent(AgentTopic),
+    App(AppTopic),
 }
 
 impl Topic {
@@ -68,6 +82,7 @@ impl fmt::Display for Topic {
         let value: &fmt::Display = match *self {
             Topic::Ping(ref t) => t,
             Topic::Agent(ref t) => t,
+            Topic::App(ref t) => t,
         };
 
         write!(f, "{}", value)
@@ -93,19 +108,43 @@ pub struct AgentTopic {
     agent_id: Uuid,
     version: String,
     pub room_id: Option<Uuid>,
+    pub resource: Option<Resource>,
+}
+
+impl AgentTopic {
+    pub fn get_reverse(&self) -> AgentTopic {
+        let kind = match self.kind {
+            AgentTopicKind::In => AgentTopicKind::Out,
+            AgentTopicKind::Out => AgentTopicKind::In,
+        };
+
+        AgentTopic {
+            kind,
+            agent_id: self.agent_id.clone(),
+            version: self.version.clone(),
+            room_id: self.room_id.clone(),
+            resource: self.resource.clone(),
+        }
+    }
 }
 
 impl fmt::Display for AgentTopic {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let kind = self.kind.to_string().to_lowercase();
         let mut topic = format!(
             "agents/{}/{}/signals.netology-group.services/api/{}/rooms",
-            self.agent_id, kind, self.version
+            self.agent_id, self.kind, self.version
         );
+
         if let Some(room_id) = self.room_id {
             topic.push_str("/");
             topic.push_str(&room_id.hyphenated().to_string());
         }
+
+        if let Some(ref resource) = self.resource {
+            topic.push_str("/");
+            topic.push_str(&resource.to_string());
+        }
+
         f.write_str(&topic)
     }
 }
@@ -118,7 +157,56 @@ enum AgentTopicKind {
 
 impl fmt::Display for AgentTopicKind {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{:?}", self)
+        let value = format!("{:?}", self).to_lowercase();
+        f.write_str(&value)
+    }
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub struct Resource {
+    pub kind: ResourceKind,
+    pub id: Option<Uuid>,
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum ResourceKind {
+    Agents,
+    Tracks,
+}
+
+impl fmt::Display for Resource {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let mut resource = format!("{}", self.kind);
+
+        if let Some(id) = self.id {
+            resource.push_str("/");
+            resource.push_str(&id.hyphenated().to_string());
+        }
+
+        f.write_str(&resource)
+    }
+}
+
+impl fmt::Display for ResourceKind {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let value = format!("{:?}", self).to_lowercase();
+        f.write_str(&value)
+    }
+}
+
+#[derive(Debug, PartialEq)]
+pub struct AppTopic {
+    pub room_id: Uuid,
+    pub resource_kind: ResourceKind,
+}
+
+impl fmt::Display for AppTopic {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(
+            f,
+            "apps/signals.netology-group.services/api/v1/rooms/{}/{}",
+            self.room_id, self.resource_kind
+        )
     }
 }
 
@@ -153,6 +241,7 @@ impl Reversible for AgentTopic {
             agent_id: self.agent_id.clone(),
             version: self.version.clone(),
             room_id: self.room_id.clone(),
+            resource: self.resource.clone(),
         }
     }
 }
@@ -170,6 +259,7 @@ mod tests {
             agent_id: Uuid::parse_str("e19c94cf-53eb-4048-9c94-7ae74ff6d912").unwrap(),
             version: "v1".to_string(),
             room_id: None,
+            resource: None,
         });
         assert_eq!(topic, Done("", topic_exp));
 
@@ -179,6 +269,7 @@ mod tests {
             agent_id: Uuid::parse_str("e19c94cf-53eb-4048-9c94-7ae74ff6d912").unwrap(),
             version: "v1".to_string(),
             room_id: None,
+            resource: None,
         });
         assert_eq!(topic, Done("/", topic_exp));
 
@@ -188,12 +279,82 @@ mod tests {
             agent_id: Uuid::parse_str("e19c94cf-53eb-4048-9c94-7ae74ff6d912").unwrap(),
             version: "v1".to_string(),
             room_id: Some(Uuid::parse_str("058df470-73ea-43a4-b36c-e4615cad468e").unwrap()),
+            resource: None,
         });
         assert_eq!(topic, Done("", topic_exp));
 
         let topic =
             agent_topic("agents/e19c94cf-53eb-4048-9c94-7ae74ff6d912/out/signals/api/v1/rooms/456");
         assert!(topic.is_err());
+    }
+
+    #[test]
+    fn parse_topic_resource() {
+        let resource = topic_resource("agents");
+        let resource_exp = Resource {
+            kind: ResourceKind::Agents,
+            id: None,
+        };
+        assert_eq!(resource, Done("", resource_exp));
+
+        let resource = topic_resource("agents/");
+        let resource_exp = Resource {
+            kind: ResourceKind::Agents,
+            id: None,
+        };
+        assert_eq!(resource, Done("/", resource_exp));
+
+        let resource = topic_resource("agents/c6d2eec6-94ac-4575-9658-10c93b939d9a");
+        let resource_exp = Resource {
+            kind: ResourceKind::Agents,
+            id: Some(Uuid::parse_str("c6d2eec6-94ac-4575-9658-10c93b939d9a").unwrap()),
+        };
+        assert_eq!(resource, Done("", resource_exp));
+
+        assert!(topic_resource("foo").is_err());
+        assert!(topic_resource("foo/c6d2eec6-94ac-4575-9658-10c93b939d9a").is_err());
+    }
+
+    #[test]
+    fn parse_agent_topic_with_resource() {
+        let topic = agent_topic("agents/e19c94cf-53eb-4048-9c94-7ae74ff6d912/out/signals.netology-group.services/api/v1/rooms/058df470-73ea-43a4-b36c-e4615cad468e/agents");
+        let topic_exp = Topic::Agent(AgentTopic {
+            kind: AgentTopicKind::Out,
+            agent_id: Uuid::parse_str("e19c94cf-53eb-4048-9c94-7ae74ff6d912").unwrap(),
+            version: "v1".to_string(),
+            room_id: Some(Uuid::parse_str("058df470-73ea-43a4-b36c-e4615cad468e").unwrap()),
+            resource: Some(Resource {
+                kind: ResourceKind::Agents,
+                id: None,
+            }),
+        });
+        assert_eq!(topic, Done("", topic_exp));
+
+        let topic = agent_topic("agents/e19c94cf-53eb-4048-9c94-7ae74ff6d912/out/signals.netology-group.services/api/v1/rooms/058df470-73ea-43a4-b36c-e4615cad468e/agents/");
+        let topic_exp = Topic::Agent(AgentTopic {
+            kind: AgentTopicKind::Out,
+            agent_id: Uuid::parse_str("e19c94cf-53eb-4048-9c94-7ae74ff6d912").unwrap(),
+            version: "v1".to_string(),
+            room_id: Some(Uuid::parse_str("058df470-73ea-43a4-b36c-e4615cad468e").unwrap()),
+            resource: Some(Resource {
+                kind: ResourceKind::Agents,
+                id: None,
+            }),
+        });
+        assert_eq!(topic, Done("/", topic_exp));
+
+        let topic = agent_topic("agents/e19c94cf-53eb-4048-9c94-7ae74ff6d912/out/signals.netology-group.services/api/v1/rooms/058df470-73ea-43a4-b36c-e4615cad468e/agents/c6d2eec6-94ac-4575-9658-10c93b939d9a");
+        let topic_exp = Topic::Agent(AgentTopic {
+            kind: AgentTopicKind::Out,
+            agent_id: Uuid::parse_str("e19c94cf-53eb-4048-9c94-7ae74ff6d912").unwrap(),
+            version: "v1".to_string(),
+            room_id: Some(Uuid::parse_str("058df470-73ea-43a4-b36c-e4615cad468e").unwrap()),
+            resource: Some(Resource {
+                kind: ResourceKind::Agents,
+                id: Some(Uuid::parse_str("c6d2eec6-94ac-4575-9658-10c93b939d9a").unwrap()),
+            }),
+        });
+        assert_eq!(topic, Done("", topic_exp));
     }
 
     #[test]
@@ -210,7 +371,7 @@ mod tests {
 
     #[test]
     fn parse_topic() {
-        let topic = Topic::parse("agents/e19c94cf-53eb-4048-9c94-7ae74ff6d912/out/signals.netology-group.services/api/v1/rooms/058df470-73ea-43a4-b36c-e4615cad468e");
+        let topic = Topic::parse("agents/e19c94cf-53eb-4048-9c94-7ae74ff6d912/out/signals.netology-group.services/api/v1/rooms/058df470-73ea-43a4-b36c-e4615cad468e/agents/c6d2eec6-94ac-4575-9658-10c93b939d9a");
         assert!(topic.is_ok());
 
         if let Topic::Agent(t) = topic.unwrap() {
@@ -224,6 +385,13 @@ mod tests {
                 t.room_id,
                 Some(Uuid::parse_str("058df470-73ea-43a4-b36c-e4615cad468e").unwrap())
             );
+            assert_eq!(
+                t.resource,
+                Some(Resource {
+                    kind: ResourceKind::Agents,
+                    id: Some(Uuid::parse_str("c6d2eec6-94ac-4575-9658-10c93b939d9a").unwrap()),
+                })
+            )
         } else {
             assert!(false);
         }
@@ -255,6 +423,10 @@ mod tests {
             agent_id: Uuid::parse_str("e19c94cf-53eb-4048-9c94-7ae74ff6d912").unwrap(),
             version: "v1".to_string(),
             room_id: None,
+            resource: Some(Resource {
+                kind: ResourceKind::Agents,
+                id: Some(Uuid::parse_str("c6d2eec6-94ac-4575-9658-10c93b939d9a").unwrap()),
+            }),
         };
         let in_topic = out_topic.get_reverse();
 
@@ -263,6 +435,10 @@ mod tests {
             agent_id: Uuid::parse_str("e19c94cf-53eb-4048-9c94-7ae74ff6d912").unwrap(),
             version: "v1".to_string(),
             room_id: None,
+            resource: Some(Resource {
+                kind: ResourceKind::Agents,
+                id: Some(Uuid::parse_str("c6d2eec6-94ac-4575-9658-10c93b939d9a").unwrap()),
+            }),
         };
 
         assert_eq!(in_topic, expected);
@@ -294,8 +470,19 @@ mod tests {
             agent_id: Uuid::parse_str("e19c94cf-53eb-4048-9c94-7ae74ff6d912").unwrap(),
             version: "v1".to_string(),
             room_id: Some(Uuid::parse_str("058df470-73ea-43a4-b36c-e4615cad468e").unwrap()),
+            resource: Some(Resource {
+                kind: ResourceKind::Agents,
+                id: Some(Uuid::parse_str("c6d2eec6-94ac-4575-9658-10c93b939d9a").unwrap()),
+            }),
         });
-        let expected = "agents/e19c94cf-53eb-4048-9c94-7ae74ff6d912/out/signals.netology-group.services/api/v1/rooms/058df470-73ea-43a4-b36c-e4615cad468e";
+        let expected = "agents/e19c94cf-53eb-4048-9c94-7ae74ff6d912/out/signals.netology-group.services/api/v1/rooms/058df470-73ea-43a4-b36c-e4615cad468e/agents/c6d2eec6-94ac-4575-9658-10c93b939d9a";
+        assert_eq!(topic.to_string(), expected);
+
+        let topic = Topic::App(AppTopic {
+            room_id: Uuid::parse_str("058df470-73ea-43a4-b36c-e4615cad468e").unwrap(),
+            resource_kind: ResourceKind::Agents,
+        });
+        let expected = "apps/signals.netology-group.services/api/v1/rooms/058df470-73ea-43a4-b36c-e4615cad468e/agents";
         assert_eq!(topic.to_string(), expected);
     }
 }
