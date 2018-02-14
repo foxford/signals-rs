@@ -1,4 +1,6 @@
 #![recursion_limit = "1024"]
+#![cfg_attr(test, feature(plugin))]
+#![cfg_attr(test, plugin(clippy))]
 
 #[macro_use]
 extern crate diesel;
@@ -50,7 +52,7 @@ pub fn run(mqtt_options: MqttOptions) {
     });
 
     for msg in rx.iter() {
-        if let Err(ref e) = handle_message(&mut client, msg) {
+        if let Err(ref e) = handle_message(&mut client, &msg) {
             use std::io::Write;
             let stderr = &mut ::std::io::stderr();
             let errmsg = "Error writing to stderr";
@@ -68,10 +70,13 @@ fn subscribe(client: &mut MqttClient) -> Result<()> {
             QoS::Level1,
         ),
     ];
-    Ok(client.subscribe(topics)?)
+
+    client.subscribe(topics)?;
+
+    Ok(())
 }
 
-fn handle_message(client: &mut MqttClient, mqtt_msg: MqttMessage) -> Result<()> {
+fn handle_message(client: &mut MqttClient, mqtt_msg: &MqttMessage) -> Result<()> {
     println!("Received message: {:?}", mqtt_msg);
 
     let topic = Topic::parse(&mqtt_msg.topic)?;

@@ -120,9 +120,9 @@ impl AgentTopic {
 
         AgentTopic {
             kind,
-            agent_id: self.agent_id.clone(),
+            agent_id: self.agent_id,
             version: self.version.clone(),
-            room_id: self.room_id.clone(),
+            room_id: self.room_id,
             resource: self.resource.clone(),
         }
     }
@@ -238,9 +238,9 @@ impl Reversible for AgentTopic {
 
         AgentTopic {
             kind,
-            agent_id: self.agent_id.clone(),
+            agent_id: self.agent_id,
             version: self.version.clone(),
-            room_id: self.room_id.clone(),
+            room_id: self.room_id,
             resource: self.resource.clone(),
         }
     }

@@ -94,7 +94,7 @@ pub struct RoomsListRequest {
 }
 
 impl RoomsListRequest {
-    pub fn build_response(self, rooms: &Vec<models::Room>) -> RoomsListResponse {
+    pub fn build_response(self, rooms: &[models::Room]) -> RoomsListResponse {
         let payload: Vec<RoomsListResponsePayload> = rooms
             .iter()
             .map(|room| {

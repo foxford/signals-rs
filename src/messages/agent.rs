@@ -102,7 +102,7 @@ pub struct AgentsListRequest {
 }
 
 impl AgentsListRequest {
-    pub fn build_response(self, agents: &Vec<models::Agent>) -> AgentsListResponse {
+    pub fn build_response(self, agents: &[models::Agent]) -> AgentsListResponse {
         let payload: Vec<AgentsListResponsePayload> = agents
             .iter()
             .map(|agent| AgentsListResponsePayload {
