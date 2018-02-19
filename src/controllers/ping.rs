@@ -12,7 +12,7 @@ impl TopicController for PingController {
     type Topic = PingTopicKind;
 
     fn call(topic: &PingTopicKind, envelope: Envelope) -> Result<Vec<Response>> {
-        let msg = envelope.message()?;
+        let msg = Message::from_envelope(&envelope)?;
         match msg {
             Message::Ping => {
                 let payload = serde_json::to_string(&Message::Pong).unwrap();

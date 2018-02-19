@@ -17,7 +17,7 @@ impl TopicController for Controller {
     type Topic = AgentTopic;
 
     fn call(topic: &AgentTopic, envelope: Envelope) -> Result<Vec<Response>> {
-        let msg = envelope.message()?;
+        let msg = Message::from_envelope(&envelope)?;
 
         match topic.room_id {
             Some(room_id) => {
@@ -52,7 +52,7 @@ impl CrudlController for Controller {
     fn create(topic: &AgentTopic, envelope: Envelope) -> Result<Vec<Response>> {
         // FIXME: use connection pool
         let conn = establish_connection();
-        let msg = envelope.message()?;
+        let msg = Message::from_envelope(&envelope)?;
 
         match msg {
             Message::RoomsCreateRequest(req) => {
@@ -80,7 +80,7 @@ impl CrudlController for Controller {
     }
 
     fn read(topic: &AgentTopic, envelope: Envelope, room: models::Room) -> Result<Vec<Response>> {
-        let msg = envelope.message()?;
+        let msg = Message::from_envelope(&envelope)?;
 
         match msg {
             Message::RoomsReadRequest(req) => {
@@ -104,7 +104,7 @@ impl CrudlController for Controller {
     fn update(topic: &AgentTopic, envelope: Envelope, room: models::Room) -> Result<Vec<Response>> {
         // FIXME: use connection pool
         let conn = establish_connection();
-        let msg = envelope.message()?;
+        let msg = Message::from_envelope(&envelope)?;
 
         match msg {
             Message::RoomsUpdateRequest(req) => {
@@ -130,7 +130,7 @@ impl CrudlController for Controller {
     fn delete(topic: &AgentTopic, envelope: Envelope, room: models::Room) -> Result<Vec<Response>> {
         // FIXME: use connection pool
         let conn = establish_connection();
-        let msg = envelope.message()?;
+        let msg = Message::from_envelope(&envelope)?;
 
         match msg {
             Message::RoomsDeleteRequest(req) => {
@@ -156,7 +156,7 @@ impl CrudlController for Controller {
     fn list(topic: &AgentTopic, envelope: Envelope) -> Result<Vec<Response>> {
         // FIXME: use connection pool
         let conn = establish_connection();
-        let msg = envelope.message()?;
+        let msg = Message::from_envelope(&envelope)?;
 
         match msg {
             Message::RoomsListRequest(req) => {

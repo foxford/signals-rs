@@ -75,6 +75,14 @@ impl Topic {
     pub fn parse(topic_str: &str) -> Result<Topic> {
         Ok(topic(topic_str).to_result()?)
     }
+
+    pub fn get_reverse(&self) -> Topic {
+        match *self {
+            Topic::Ping(ref t) => Topic::Ping(t.get_reverse()),
+            Topic::Agent(ref t) => Topic::Agent(t.get_reverse()),
+            Topic::App(_) => unreachable!(),
+        }
+    }
 }
 
 impl fmt::Display for Topic {

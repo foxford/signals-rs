@@ -12,10 +12,19 @@ fn main() {
         }
     };
 
+    let mqtt_broker = match env::var("MQTT_BROKER") {
+        Ok(val) => val,
+        Err(err) => {
+            println!("MQTT_BROKER {}", err);
+            process::exit(1);
+        }
+    };
+
     let mqtt_options = rumqtt::MqttOptions::new()
         .set_keep_alive(5)
         .set_reconnect(3)
-        .set_client_id(mqtt_client_id);
+        .set_client_id(mqtt_client_id)
+        .set_broker(&mqtt_broker);
 
     signals::run(mqtt_options);
 }

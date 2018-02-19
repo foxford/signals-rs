@@ -18,7 +18,7 @@ impl TopicController for Controller {
     type Topic = AgentTopic;
 
     fn call(topic: &AgentTopic, envelope: Envelope) -> Result<Vec<Response>> {
-        let msg = envelope.message()?;
+        let msg = Message::from_envelope(&envelope)?;
 
         if let Some(ref resource) = topic.resource {
             match resource.id {
@@ -61,7 +61,7 @@ impl CrudlController for Controller {
     fn create(topic: &AgentTopic, envelope: Envelope) -> Result<Vec<Response>> {
         // FIXME: use connection pool
         let conn = establish_connection();
-        let msg = envelope.message()?;
+        let msg = Message::from_envelope(&envelope)?;
 
         match msg {
             Message::AgentsCreateRequest(req) => {
@@ -118,7 +118,7 @@ impl CrudlController for Controller {
     }
 
     fn read(topic: &AgentTopic, envelope: Envelope, agent: models::Agent) -> Result<Vec<Response>> {
-        let msg = envelope.message()?;
+        let msg = Message::from_envelope(&envelope)?;
 
         match msg {
             Message::AgentsReadRequest(req) => {
@@ -146,7 +146,7 @@ impl CrudlController for Controller {
     ) -> Result<Vec<Response>> {
         // FIXME: use connection pool
         let conn = establish_connection();
-        let msg = envelope.message()?;
+        let msg = Message::from_envelope(&envelope)?;
 
         match msg {
             Message::AgentsUpdateRequest(req) => {
@@ -182,7 +182,7 @@ impl CrudlController for Controller {
     ) -> Result<Vec<Response>> {
         // FIXME: use connection pool
         let conn = establish_connection();
-        let msg = envelope.message()?;
+        let msg = Message::from_envelope(&envelope)?;
 
         match msg {
             Message::AgentsDeleteRequest(req) => {
@@ -208,7 +208,7 @@ impl CrudlController for Controller {
     fn list(topic: &AgentTopic, envelope: Envelope) -> Result<Vec<Response>> {
         // FIXME: use connection pool
         let conn = establish_connection();
-        let msg = envelope.message()?;
+        let msg = Message::from_envelope(&envelope)?;
 
         match msg {
             Message::AgentsListRequest(req) => {

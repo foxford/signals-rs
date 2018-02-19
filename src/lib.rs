@@ -6,6 +6,7 @@
 extern crate diesel;
 #[macro_use]
 extern crate error_chain;
+extern crate jsonrpc_core;
 #[macro_use]
 extern crate nom;
 extern crate rumqtt;
@@ -27,6 +28,7 @@ use topic::Topic;
 mod controllers;
 mod errors;
 mod messages;
+mod rpc;
 mod topic;
 
 mod schema;
@@ -51,8 +53,10 @@ pub fn run(mqtt_options: MqttOptions) {
         process::exit(1);
     });
 
+    let server = rpc::build_server();
+
     for msg in rx.iter() {
-        if let Err(ref e) = handle_message(&mut client, &msg) {
+        if let Err(ref e) = handle_message(&server, &mut client, &msg) {
             use std::io::Write;
             let stderr = &mut ::std::io::stderr();
             let errmsg = "Error writing to stderr";
@@ -76,7 +80,11 @@ fn subscribe(client: &mut MqttClient) -> Result<()> {
     Ok(())
 }
 
-fn handle_message(client: &mut MqttClient, mqtt_msg: &MqttMessage) -> Result<()> {
+fn handle_message(
+    server: &rpc::Server,
+    mqtt_client: &mut MqttClient,
+    mqtt_msg: &MqttMessage,
+) -> Result<()> {
     println!("Received message: {:?}", mqtt_msg);
 
     let topic = Topic::parse(&mqtt_msg.topic)?;
@@ -86,11 +94,21 @@ fn handle_message(client: &mut MqttClient, mqtt_msg: &MqttMessage) -> Result<()>
     println!("Payload: {:?}", payload);
 
     let envelope: Envelope = serde_json::from_str(&payload)?;
-    let ctrl = MainController::new(&topic);
+    let request = envelope.msg;
 
-    for message in ctrl.call(envelope)? {
-        client.publish(&message.topic.to_string(), message.qos, message.payload)?;
-    }
+    let meta = rpc::Meta {
+        subject: envelope.sub,
+    };
+
+    let resp = server.handle_request_sync(&request, meta).unwrap();
+    let resp_topic = topic.get_reverse();
+    mqtt_client.publish(&resp_topic.to_string(), QoS::Level1, resp.into_bytes())?;
+
+    // let ctrl = MainController::new(&topic);
+
+    // for message in ctrl.call(envelope)? {
+    //     mqtt_client.publish(&message.topic.to_string(), message.qos, message.payload)?;
+    // }
 
     Ok(())
 }

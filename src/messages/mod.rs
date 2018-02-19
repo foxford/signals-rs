@@ -1,4 +1,5 @@
 use serde_json;
+use std::ops::Deref;
 
 use errors::*;
 use messages::agent::*;
@@ -37,26 +38,34 @@ pub enum Message {
     AgentsListResponse(AgentsListResponse),
 }
 
-#[derive(Debug, PartialEq, Serialize, Deserialize)]
-pub struct Envelope {
-    sub: EnvelopeSubject,
-    msg: EnvelopeMessage,
-}
-
-impl Envelope {
-    pub fn message(&self) -> Result<Message> {
-        Ok(serde_json::from_str(&self.msg.0)?)
+impl Message {
+    pub fn from_envelope(envelope: &Envelope) -> Result<Message> {
+        Ok(serde_json::from_str(&envelope.msg.0)?)
     }
 }
 
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
-struct EnvelopeSubject {
-    account_id: String,
-    agent_id: String,
+pub struct Envelope {
+    pub sub: EnvelopeSubject,
+    pub msg: EnvelopeMessage,
+}
+
+#[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize)]
+pub struct EnvelopeSubject {
+    pub account_id: String,
+    pub agent_id: String,
 }
 
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
-struct EnvelopeMessage(String);
+pub struct EnvelopeMessage(String);
+
+impl Deref for EnvelopeMessage {
+    type Target = str;
+
+    fn deref(&self) -> &str {
+        &self.0
+    }
+}
 
 #[cfg(test)]
 mod tests {
@@ -83,9 +92,9 @@ mod tests {
         }"#;
 
         let envelope: Envelope = serde_json::from_str(json).unwrap();
-        assert!(envelope.message().is_ok());
+        assert!(Message::from_envelope(&envelope).is_ok());
 
-        let msg = envelope.message().unwrap();
+        let msg = Message::from_envelope(&envelope).unwrap();
         assert_eq!(msg, Message::Ping);
 
         let json = r#"{
@@ -97,6 +106,6 @@ mod tests {
         }"#;
 
         let envelope: Envelope = serde_json::from_str(json).unwrap();
-        assert!(envelope.message().is_err());
+        assert!(Message::from_envelope(&envelope).is_err());
     }
 }
