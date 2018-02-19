@@ -3,27 +3,15 @@ use std::ops::Deref;
 
 use errors::*;
 use messages::agent::*;
-use messages::room::*;
 
 pub mod agent;
-mod room;
+pub mod room;
 
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
 #[serde(tag = "type")]
 pub enum Message {
     Ping,
     Pong,
-
-    RoomsCreateRequest(RoomsCreateRequest),
-    RoomsCreateResponse(RoomsCreateResponse),
-    RoomsReadRequest(RoomsReadRequest),
-    RoomsReadResponse(RoomsReadResponse),
-    RoomsUpdateRequest(RoomsUpdateRequest),
-    RoomsUpdateResponse(RoomsUpdateResponse),
-    RoomsDeleteRequest(RoomsDeleteRequest),
-    RoomsDeleteResponse(RoomsDeleteResponse),
-    RoomsListRequest(RoomsListRequest),
-    RoomsListResponse(RoomsListResponse),
 
     AgentsCreateRequest(AgentsCreateRequest),
     AgentsCreateResponse(AgentsCreateResponse),

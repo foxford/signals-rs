@@ -1,126 +1,89 @@
 use models;
+use uuid::Uuid;
 
-// RoomsCreate
+// Create
 
-#[derive(Debug, PartialEq, Serialize, Deserialize)]
-pub struct RoomsCreateRequest {
-    pub payload: RoomsCreateRequestPayload,
-    cid: String,
+#[derive(Debug, Serialize, Deserialize)]
+pub struct CreateRequest {
+    pub data: CreateRequestData,
 }
 
-type RoomsCreateRequestPayload = models::NewRoom;
+type CreateRequestData = models::NewRoom;
 
-impl RoomsCreateRequest {
-    pub fn build_response(self, room: &models::Room) -> RoomsCreateResponse {
-        RoomsCreateResponse {
-            payload: RoomsCreateResponsePayload {
-                id: room.id.to_string(),
-                data: RoomsCreateResponseData {
-                    label: Some(room.label.clone()), // FIXME: avoid clone()
-                },
-            },
-            cid: self.cid,
-        }
-    }
-}
-
-#[derive(Debug, PartialEq, Serialize, Deserialize)]
-pub struct RoomsCreateResponse {
-    payload: RoomsCreateResponsePayload,
-    cid: String,
-}
-
-#[derive(Debug, PartialEq, Serialize, Deserialize)]
-struct RoomsCreateResponsePayload {
+#[derive(Debug, Serialize, Deserialize)]
+pub struct CreateResponse {
     id: String,
-    data: RoomsCreateResponseData,
+    data: CreateResponseData,
 }
 
-type RoomsCreateResponseData = RoomsCreateRequestPayload;
+type CreateResponseData = CreateRequestData;
 
-// RoomsCreate
-
-// RoomsRead
-
-#[derive(Debug, PartialEq, Serialize, Deserialize)]
-pub struct RoomsReadRequest {
-    cid: String,
-}
-
-impl RoomsReadRequest {
-    pub fn build_response(self, room: &models::Room) -> RoomsReadResponse {
-        RoomsReadResponse {
-            payload: RoomsReadResponsePayload {
-                id: room.id.to_string(),
-                data: RoomsReadResponseData {
-                    label: Some(room.label.clone()), // FIXME: avoid clone()
-                },
+impl CreateResponse {
+    pub fn new(room: &models::Room) -> CreateResponse {
+        CreateResponse {
+            id: room.id.to_string(),
+            data: CreateResponseData {
+                label: Some(room.label.clone()),
             },
-            cid: self.cid,
         }
     }
 }
+// Create
 
-#[derive(Debug, PartialEq, Serialize, Deserialize)]
-pub struct RoomsReadResponse {
-    payload: RoomsReadResponsePayload,
-    cid: String,
+// Read
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct ReadRequest {
+    pub room_id: Uuid,
 }
 
-type RoomsReadResponsePayload = RoomsCreateResponsePayload;
-type RoomsReadResponseData = RoomsCreateResponseData;
+pub type ReadResponse = CreateResponse;
+type ReadResponseData = CreateResponseData;
 
-// RoomsRead
+// Read
 
-// RoomsUpdate
+// Update
 
-pub type RoomsUpdateRequest = RoomsCreateRequest;
-pub type RoomsUpdateResponse = RoomsCreateResponse;
-
-// RoomsUpdate
-
-// RoomsDelete
-
-pub type RoomsDeleteRequest = RoomsReadRequest;
-pub type RoomsDeleteResponse = RoomsReadResponse;
-
-// RoomsDelete
-
-// RoomsList
-
-#[derive(Debug, PartialEq, Serialize, Deserialize)]
-pub struct RoomsListRequest {
-    cid: String,
+#[derive(Debug, Serialize, Deserialize)]
+pub struct UpdateRequest {
+    pub room_id: Uuid,
+    pub data: CreateRequestData,
 }
 
-impl RoomsListRequest {
-    pub fn build_response(self, rooms: &[models::Room]) -> RoomsListResponse {
-        let payload: Vec<RoomsListResponsePayload> = rooms
+pub type UpdateResponse = CreateResponse;
+
+// Update
+
+// Delete
+
+pub type DeleteRequest = ReadRequest;
+pub type DeleteResponse = ReadResponse;
+
+// Delete
+
+// List
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct ListResponse {
+    data: Vec<ListResponseData>,
+}
+
+impl ListResponse {
+    pub fn new(rooms: &[models::Room]) -> ListResponse {
+        let data: Vec<ListResponseData> = rooms
             .iter()
-            .map(|room| {
-                RoomsListResponsePayload {
-                    id: room.id.to_string(),
-                    data: RoomsListResponseData {
-                        label: Some(room.label.clone()), // FIXME: avoid clone()
-                    },
-                }
+            .map(|room| ListResponseData {
+                id: room.id.to_string(),
+                data: ReadResponseData {
+                    label: Some(room.label.clone()),
+                },
             })
             .collect();
 
-        RoomsListResponse {
-            payload: payload,
-            cid: self.cid,
-        }
+        ListResponse { data }
     }
 }
 
-#[derive(Debug, PartialEq, Serialize, Deserialize)]
-pub struct RoomsListResponse {
-    payload: Vec<RoomsListResponsePayload>,
-    cid: String,
-}
+type ListResponseData = ReadResponse;
 
-type RoomsListResponsePayload = RoomsReadResponsePayload;
-type RoomsListResponseData = RoomsReadResponseData;
-
-// RoomsList
+// List
