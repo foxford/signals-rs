@@ -3,9 +3,7 @@ rust:
   - nightly
 cache: cargo
 before_script:
-  - export PATH="$PATH:$HOME/.cargo/bin"
   - rustup component add rustfmt-preview
-  - which rustfmt || cargo install -f rustfmt-nightly
 script:
   - cargo fmt -- --write-mode=diff
   - cargo build
