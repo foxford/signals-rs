@@ -70,7 +70,7 @@ fn subscribe(client: &mut MqttClient) -> Result<()> {
     let topics = vec![
         ("ping", QoS::Level0),
         (
-            "agents/+/out/signals.netology-group.services/api/v1/rooms/#",
+            "agents/+/out/signals.netology-group.services/api/v1",
             QoS::Level1,
         ),
     ];
