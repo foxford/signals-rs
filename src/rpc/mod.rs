@@ -1,10 +1,11 @@
 use jsonrpc_core::{self, to_value, MetaIoHandler, Metadata, Params, Value};
 
 use messages::{EnvelopeSubject, Message};
+use rpc::ping::Rpc as PingRpc;
+use rpc::room::Rpc as RoomRpc;
 
+mod ping;
 mod room;
-
-pub type RpcResult = jsonrpc_core::Result<Value>;
 
 #[derive(Clone, Debug, Default)]
 pub struct Meta {
@@ -18,17 +19,11 @@ pub type Server = MetaIoHandler<Meta>;
 pub fn build_server() -> Server {
     let mut io = MetaIoHandler::default();
 
-    io.add_method("ping", |params: Params| {
-        let _msg: Message = params.parse()?;
+    let rpc = ping::RpcImpl {};
+    io.extend_with(rpc.to_delegate());
 
-        Ok(to_value(Message::Pong).unwrap())
-    });
-
-    io.add_method("room.create", room::create);
-    io.add_method("room.read", room::read);
-    io.add_method("room.update", room::update);
-    io.add_method("room.delete", room::delete);
-    io.add_method("room.list", room::list);
+    let rpc = room::RpcImpl {};
+    io.extend_with(rpc.to_delegate());
 
     io
 }

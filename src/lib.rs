@@ -8,6 +8,8 @@ extern crate diesel;
 extern crate error_chain;
 extern crate jsonrpc_core;
 #[macro_use]
+extern crate jsonrpc_macros;
+#[macro_use]
 extern crate nom;
 extern crate rumqtt;
 extern crate serde;

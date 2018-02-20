@@ -1,85 +1,84 @@
 use diesel;
 use diesel::prelude::*;
-use jsonrpc_core::{to_value, Params};
+
+use errors::Result;
 use messages::room;
 use models;
-use rpc::RpcResult;
 use schema::rooms;
 
-pub fn create(params: Params) -> RpcResult {
-    let req: room::CreateRequest = params.parse()?;
+use messages::room::{CreateRequest, CreateResponse, DeleteRequest, DeleteResponse, ListResponse,
+                     ReadRequest, ReadResponse, UpdateRequest, UpdateResponse};
 
-    // FIXME: use connection pool
-    let conn = establish_connection();
+build_rpc_trait! {
+    pub trait Rpc {
+        #[rpc(name = "room.create")]
+        fn create(&self, CreateRequest) -> Result<CreateResponse>;
 
-    // FIXME: don't unwrap
-    let room: models::Room = diesel::insert_into(rooms::table)
-        .values(&req.data)
-        .get_result(&conn)
-        .unwrap();
+        #[rpc(name = "room.read")]
+        fn read(&self, ReadRequest) -> Result<ReadResponse>;
 
-    let resp = room::CreateResponse::new(&room);
-    // FIXME: don't unwrap
-    Ok(to_value(resp).unwrap())
+        #[rpc(name = "room.update")]
+        fn update(&self, UpdateRequest) -> Result<UpdateResponse>;
+
+        #[rpc(name = "room.delete")]
+        fn delete(&self, DeleteRequest) -> Result<DeleteResponse>;
+
+        #[rpc(name = "room.list")]
+        fn list(&self) -> Result<ListResponse>;
+    }
 }
 
-pub fn read(params: Params) -> RpcResult {
-    let req: room::ReadRequest = params.parse()?;
+pub struct RpcImpl;
 
-    // FIXME: use connection pool
-    let conn = establish_connection();
+impl Rpc for RpcImpl {
+    fn create(&self, req: CreateRequest) -> Result<CreateResponse> {
+        // FIXME: use connection pool
+        let conn = establish_connection();
 
-    // FIXME: don't unwrap
-    let room: models::Room = rooms::table.find(req.room_id).first(&conn).unwrap();
-    let resp = room::ReadResponse::new(&room);
+        let room: models::Room = diesel::insert_into(rooms::table)
+            .values(&req.data)
+            .get_result(&conn)?;
 
-    // FIXME: don't unwrap
-    Ok(to_value(resp).unwrap())
-}
+        Ok(room::CreateResponse::new(&room))
+    }
 
-pub fn update(params: Params) -> RpcResult {
-    let req: room::UpdateRequest = params.parse()?;
+    fn read(&self, req: ReadRequest) -> Result<ReadResponse> {
+        // FIXME: use connection pool
+        let conn = establish_connection();
 
-    // FIXME: use connection pool
-    let conn = establish_connection();
+        let room: models::Room = rooms::table.find(req.room_id).first(&conn)?;
 
-    // FIXME: don't unwrap
-    let room = rooms::table.find(req.room_id);
-    let room: models::Room = diesel::update(room)
-        .set(&req.data)
-        .get_result(&conn)
-        .unwrap();
-    let resp = room::UpdateResponse::new(&room);
+        Ok(ReadResponse::new(&room))
+    }
 
-    // FIXME: don't unwrap
-    Ok(to_value(resp).unwrap())
-}
+    fn update(&self, req: UpdateRequest) -> Result<UpdateResponse> {
+        // FIXME: use connection pool
+        let conn = establish_connection();
 
-pub fn delete(params: Params) -> RpcResult {
-    let req: room::DeleteRequest = params.parse()?;
+        let room = rooms::table.find(req.room_id);
+        let room: models::Room = diesel::update(room).set(&req.data).get_result(&conn)?;
 
-    // FIXME: use connection pool
-    let conn = establish_connection();
+        Ok(UpdateResponse::new(&room))
+    }
 
-    // FIXME: don't unwrap
-    let room = rooms::table.find(req.room_id);
-    let room: models::Room = diesel::delete(room).get_result(&conn).unwrap();
-    let resp = room::DeleteResponse::new(&room);
+    fn delete(&self, req: DeleteRequest) -> Result<DeleteResponse> {
+        // FIXME: use connection pool
+        let conn = establish_connection();
 
-    // FIXME: don't unwrap
-    Ok(to_value(resp).unwrap())
-}
+        let room = rooms::table.find(req.room_id);
+        let room: models::Room = diesel::delete(room).get_result(&conn)?;
 
-pub fn list(_params: Params) -> RpcResult {
-    // FIXME: use connection pool
-    let conn = establish_connection();
+        Ok(DeleteResponse::new(&room))
+    }
 
-    // FIXME: don't unwrap
-    let rooms = rooms::table.load::<models::Room>(&conn).unwrap();
-    let resp = room::ListResponse::new(&rooms);
+    fn list(&self) -> Result<ListResponse> {
+        // FIXME: use connection pool
+        let conn = establish_connection();
 
-    // FIXME: don't unwrap
-    Ok(to_value(resp).unwrap())
+        let rooms = rooms::table.load::<models::Room>(&conn)?;
+
+        Ok(ListResponse::new(&rooms))
+    }
 }
 
 fn establish_connection() -> PgConnection {

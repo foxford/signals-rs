@@ -8,7 +8,7 @@ pub struct CreateRequest {
     pub data: CreateRequestData,
 }
 
-type CreateRequestData = models::NewRoom;
+pub type CreateRequestData = models::NewRoom;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct CreateResponse {
