@@ -22,12 +22,10 @@ use rumqtt::{Message as MqttMessage, MqttCallback, MqttClient, MqttOptions, QoS}
 use std::process;
 use std::sync::{mpsc, Mutex};
 
-use controllers::MainController;
 use errors::*;
 use messages::Envelope;
 use topic::Topic;
 
-mod controllers;
 mod errors;
 mod messages;
 mod rpc;
@@ -105,12 +103,6 @@ fn handle_message(
     let resp = server.handle_request_sync(&request, meta).unwrap();
     let resp_topic = topic.get_reverse();
     mqtt_client.publish(&resp_topic.to_string(), QoS::Level1, resp.into_bytes())?;
-
-    // let ctrl = MainController::new(&topic);
-
-    // for message in ctrl.call(envelope)? {
-    //     mqtt_client.publish(&message.topic.to_string(), message.qos, message.payload)?;
-    // }
 
     Ok(())
 }
