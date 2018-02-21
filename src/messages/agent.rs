@@ -1,132 +1,99 @@
 use models;
+use uuid::Uuid;
 
-// AgentsCreate
+// Create
 
-#[derive(Debug, PartialEq, Serialize, Deserialize)]
-pub struct AgentsCreateRequest {
-    pub payload: AgentsCreateRequestPayload,
-    cid: String,
+#[derive(Debug, Serialize, Deserialize)]
+pub struct CreateRequest {
+    pub room_id: Uuid,
+    pub id: Uuid,
+    pub data: CreateRequestData,
 }
 
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
-pub struct AgentsCreateRequestPayload {
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct CreateRequestData {
     pub label: Option<String>,
 }
 
-impl AgentsCreateRequest {
-    pub fn build_response(self, agent: &models::Agent) -> AgentsCreateResponse {
-        AgentsCreateResponse {
-            payload: AgentsCreateResponsePayload {
-                id: agent.id.to_string(),
-                data: AgentsCreateResponseData {
-                    label: Some(agent.label.clone()),
-                },
-            },
-            cid: self.cid,
-        }
-    }
-}
-
-#[derive(Debug, PartialEq, Serialize, Deserialize)]
-pub struct AgentsCreateResponse {
-    pub payload: AgentsCreateResponsePayload,
-    cid: String,
-}
-
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
-pub struct AgentsCreateResponsePayload {
+#[derive(Debug, Serialize, Deserialize)]
+pub struct CreateResponse {
     id: String,
-    data: AgentsCreateResponseData,
+    data: CreateResponseData,
 }
 
-type AgentsCreateResponseData = AgentsCreateRequestPayload;
+type CreateResponseData = CreateRequestData;
 
-#[derive(Debug, PartialEq, Serialize, Deserialize)]
-pub struct AgentsCreatedEvent {
-    pub payload: AgentsCreateResponsePayload,
-}
-
-// AgentsCreate
-
-// AgentsRead
-
-#[derive(Debug, PartialEq, Serialize, Deserialize)]
-pub struct AgentsReadRequest {
-    cid: String,
-}
-
-impl AgentsReadRequest {
-    pub fn build_response(self, agent: &models::Agent) -> AgentsReadResponse {
-        AgentsReadResponse {
-            payload: AgentsReadResponsePayload {
-                id: agent.id.to_string(),
-                data: AgentsReadResponseData {
-                    label: Some(agent.label.clone()),
-                },
+impl CreateResponse {
+    pub fn new(agent: &models::Agent) -> CreateResponse {
+        CreateResponse {
+            id: agent.id.to_string(),
+            data: CreateResponseData {
+                label: Some(agent.label.clone()),
             },
-            cid: self.cid,
         }
     }
 }
 
-#[derive(Debug, PartialEq, Serialize, Deserialize)]
-pub struct AgentsReadResponse {
-    payload: AgentsReadResponsePayload,
-    cid: String,
+// #[derive(Debug, Serialize, Deserialize)]
+// pub struct CreatedEvent {
+//     pub payload: CreateResponsePayload,
+// }
+
+// Create
+
+// Read
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct ReadRequest {
+    pub room_id: Uuid,
+    pub id: Uuid,
 }
 
-type AgentsReadResponsePayload = AgentsCreateResponsePayload;
-type AgentsReadResponseData = AgentsCreateResponseData;
+pub type ReadResponse = CreateResponse;
+type ReadResponseData = CreateResponseData;
 
-// AgentsRead
+// Read
 
-// AgentsUpdate
+// Update
 
-pub type AgentsUpdateRequest = AgentsCreateRequest;
-pub type AgentsUpdateResponse = AgentsCreateResponse;
+pub type UpdateRequest = CreateRequest;
+pub type UpdateResponse = CreateResponse;
 
-// AgentsUpdate
+// Update
 
-// AgentsDelete
+// Delete
 
-pub type AgentsDeleteRequest = AgentsReadRequest;
-pub type AgentsDeleteResponse = AgentsReadResponse;
+pub type DeleteRequest = ReadRequest;
+pub type DeleteResponse = ReadResponse;
 
-// AgentsDelete
+// Delete
 
-// AgentsList
+// List
 
-#[derive(Debug, PartialEq, Serialize, Deserialize)]
-pub struct AgentsListRequest {
-    cid: String,
+#[derive(Debug, Serialize, Deserialize)]
+pub struct ListRequest {
+    pub room_id: Uuid,
 }
 
-impl AgentsListRequest {
-    pub fn build_response(self, agents: &[models::Agent]) -> AgentsListResponse {
-        let payload: Vec<AgentsListResponsePayload> = agents
+#[derive(Debug, Serialize, Deserialize)]
+pub struct ListResponse(Vec<ListResponseData>);
+
+impl ListResponse {
+    pub fn new(agents: &[models::Agent]) -> ListResponse {
+        let data: Vec<ListResponseData> = agents
             .iter()
-            .map(|agent| AgentsListResponsePayload {
+            .map(|agent| ListResponseData {
                 id: agent.id.to_string(),
-                data: AgentsListResponseData {
+                data: ReadResponseData {
                     label: Some(agent.label.clone()),
                 },
             })
             .collect();
 
-        AgentsListResponse {
-            payload: payload,
-            cid: self.cid,
-        }
+        ListResponse(data)
     }
 }
 
-#[derive(Debug, PartialEq, Serialize, Deserialize)]
-pub struct AgentsListResponse {
-    payload: Vec<AgentsListResponsePayload>,
-    cid: String,
-}
+type ListResponseData = ReadResponse;
 
-type AgentsListResponsePayload = AgentsReadResponsePayload;
-type AgentsListResponseData = AgentsReadResponseData;
-
-// AgentsList
+// List

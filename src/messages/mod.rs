@@ -2,7 +2,6 @@ use serde_json;
 use std::ops::Deref;
 
 use errors::*;
-use messages::agent::*;
 
 pub mod agent;
 pub mod room;
@@ -12,18 +11,6 @@ pub mod room;
 pub enum Message {
     Ping,
     Pong,
-
-    AgentsCreateRequest(AgentsCreateRequest),
-    AgentsCreateResponse(AgentsCreateResponse),
-    AgentsCreatedEvent(AgentsCreatedEvent),
-    AgentsReadRequest(AgentsReadRequest),
-    AgentsReadResponse(AgentsReadResponse),
-    AgentsUpdateRequest(AgentsUpdateRequest),
-    AgentsUpdateResponse(AgentsUpdateResponse),
-    AgentsDeleteRequest(AgentsDeleteRequest),
-    AgentsDeleteResponse(AgentsDeleteResponse),
-    AgentsListRequest(AgentsListRequest),
-    AgentsListResponse(AgentsListResponse),
 }
 
 impl Message {
