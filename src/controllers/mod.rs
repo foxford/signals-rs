@@ -1,13 +1,11 @@
 use rumqtt::QoS;
 
 // use controllers::agent::AgentController;
-use controllers::ping::PingController;
 use errors::*;
 use messages::Envelope;
 use topic::{Reversible, Topic};
 
 // mod agent;
-mod ping;
 
 pub struct Response {
     pub topic: Topic,
@@ -26,7 +24,7 @@ impl<'a> MainController<'a> {
 
     pub fn call(&self, envelope: Envelope) -> Result<Vec<Response>> {
         match *self.topic {
-            Topic::Ping(ref t) => PingController::call(t, envelope),
+            Topic::Ping(_) => unimplemented!(),
             Topic::Agent(_) => unimplemented!(),
             Topic::App(_) => unreachable!(),
         }
