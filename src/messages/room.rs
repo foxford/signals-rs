@@ -64,9 +64,7 @@ pub type DeleteResponse = ReadResponse;
 // List
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct ListResponse {
-    data: Vec<ListResponseData>,
-}
+pub struct ListResponse(Vec<ListResponseData>);
 
 impl ListResponse {
     pub fn new(rooms: &[models::Room]) -> ListResponse {
@@ -80,7 +78,7 @@ impl ListResponse {
             })
             .collect();
 
-        ListResponse { data }
+        ListResponse(data)
     }
 }
 
