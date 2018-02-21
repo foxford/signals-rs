@@ -19,7 +19,7 @@ extern crate serde_json;
 extern crate uuid;
 
 use rumqtt::{Message as MqttMessage, MqttCallback, MqttClient, MqttOptions, QoS};
-use std::process;
+use std::{process, thread};
 use std::sync::{mpsc, Mutex};
 
 use errors::*;
@@ -53,17 +53,20 @@ pub fn run(mqtt_options: MqttOptions) {
         process::exit(1);
     });
 
-    let server = rpc::build_server();
+    let handle = thread::spawn(move || {
+        let server = rpc::build_server();
 
-    for msg in rx.iter() {
-        if let Err(ref e) = handle_message(&server, &mut client, &msg) {
-            use std::io::Write;
-            let stderr = &mut ::std::io::stderr();
-            let errmsg = "Error writing to stderr";
+        for msg in rx.iter() {
+            if let Err(ref e) = handle_message(&server, &mut client, &msg) {
+                use std::io::Write;
+                let stderr = &mut ::std::io::stderr();
+                let errmsg = "Error writing to stderr";
 
-            writeln!(stderr, "error: {}", e).expect(errmsg);
+                writeln!(stderr, "error: {}", e).expect(errmsg);
+            }
         }
-    }
+    });
+    handle.join().unwrap();
 }
 
 fn subscribe(client: &mut MqttClient) -> Result<()> {
