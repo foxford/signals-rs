@@ -18,25 +18,28 @@ extern crate serde_derive;
 extern crate serde_json;
 extern crate uuid;
 
+use jsonrpc_core::Notification;
 use rumqtt::{Message as MqttMessage, MqttCallback, MqttClient, MqttOptions, QoS};
 use std::{process, thread};
-use std::sync::{mpsc, Mutex};
+use std::sync::{mpsc, Arc, Mutex};
 
 use errors::*;
-use messages::Envelope;
-use topic::Topic;
+use messages::{Envelope, EventKind};
+use topic::{AppTopic, ResourceKind, Topic};
 
-mod errors;
-mod messages;
-mod rpc;
-mod topic;
+pub mod errors;
+pub mod messages;
+pub mod rpc;
+pub mod topic;
 
-mod schema;
-mod models;
+pub mod schema;
+pub mod models;
 
 pub fn run(mqtt_options: MqttOptions) {
-    let (tx, rx) = mpsc::channel();
+    let (tx, rx) = mpsc::channel::<MqttMessage>();
     let tx = Mutex::new(tx);
+
+    let (event_tx, event_rx) = mpsc::channel::<EventKind>();
 
     let callbacks = MqttCallback::new().on_message(move |msg| {
         let tx = tx.lock().unwrap();
@@ -53,20 +56,57 @@ pub fn run(mqtt_options: MqttOptions) {
         process::exit(1);
     });
 
-    let handle = thread::spawn(move || {
-        let server = rpc::build_server();
+    let client = Arc::new(Mutex::new(client));
+    let mut handles = vec![];
 
-        for msg in rx.iter() {
-            if let Err(ref e) = handle_message(&server, &mut client, &msg) {
-                use std::io::Write;
-                let stderr = &mut ::std::io::stderr();
-                let errmsg = "Error writing to stderr";
+    let handle = thread::spawn({
+        let client = Arc::clone(&client);
+        move || {
+            let server = rpc::build_server();
 
-                writeln!(stderr, "error: {}", e).expect(errmsg);
+            for msg in rx.iter() {
+                let event_tx = event_tx.clone();
+                let mut client = client.lock().unwrap();
+
+                if let Err(ref e) = handle_message(&server, &mut client, &msg, event_tx) {
+                    use std::io::Write;
+                    let stderr = &mut ::std::io::stderr();
+                    let errmsg = "Error writing to stderr";
+
+                    writeln!(stderr, "error: {}", e).expect(errmsg);
+                }
             }
         }
     });
-    handle.join().unwrap();
+    handles.push(handle);
+
+    let handle = thread::spawn({
+        let client = Arc::clone(&client);
+        move || {
+            for event in event_rx.iter() {
+                let topic = match event {
+                    EventKind::AgentCreate(ref event) => AppTopic {
+                        room_id: event.room_id,
+                        resource_kind: ResourceKind::Agents,
+                    },
+                };
+
+                let note = Notification::from(event);
+                let payload = serde_json::to_string(&note).unwrap();
+                println!("{}", payload);
+
+                let mut client = client.lock().unwrap();
+                client
+                    .publish(&topic.to_string(), QoS::Level1, payload.into_bytes())
+                    .unwrap();
+            }
+        }
+    });
+    handles.push(handle);
+
+    for handle in handles {
+        handle.join().expect("Error joining a thread");
+    }
 }
 
 fn subscribe(client: &mut MqttClient) -> Result<()> {
@@ -87,6 +127,7 @@ fn handle_message(
     server: &rpc::Server,
     mqtt_client: &mut MqttClient,
     mqtt_msg: &MqttMessage,
+    event_tx: ::std::sync::mpsc::Sender<EventKind>,
 ) -> Result<()> {
     println!("Received message: {:?}", mqtt_msg);
 
@@ -101,6 +142,7 @@ fn handle_message(
 
     let meta = rpc::Meta {
         subject: envelope.sub,
+        event_tx: Some(event_tx),
     };
 
     let resp = server.handle_request_sync(&request, meta).unwrap();

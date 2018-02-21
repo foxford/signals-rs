@@ -3,15 +3,19 @@ use diesel::prelude::*;
 
 use errors::Result;
 use models;
+use rpc;
 use schema::{agents, rooms};
 
-use messages::agent::{CreateRequest, CreateResponse, DeleteRequest, DeleteResponse, ListRequest,
-                      ListResponse, ReadRequest, ReadResponse, UpdateRequest, UpdateResponse};
+use messages::agent::{CreateEvent, CreateRequest, CreateResponse, DeleteRequest, DeleteResponse,
+                      ListRequest, ListResponse, ReadRequest, ReadResponse, UpdateRequest,
+                      UpdateResponse};
 
 build_rpc_trait! {
     pub trait Rpc {
-        #[rpc(name = "agent.create")]
-        fn create(&self, CreateRequest) -> Result<CreateResponse>;
+        type Metadata;
+
+        #[rpc(meta, name = "agent.create")]
+        fn create(&self, Self::Metadata, CreateRequest) -> Result<CreateResponse>;
 
         #[rpc(name = "agent.read")]
         fn read(&self, ReadRequest) -> Result<ReadResponse>;
@@ -30,7 +34,11 @@ build_rpc_trait! {
 pub struct RpcImpl;
 
 impl Rpc for RpcImpl {
-    fn create(&self, req: CreateRequest) -> Result<CreateResponse> {
+    type Metadata = rpc::Meta;
+
+    fn create(&self, meta: rpc::Meta, req: CreateRequest) -> Result<CreateResponse> {
+        println!("{:?}", meta);
+
         // FIXME: use connection pool
         let conn = establish_connection();
 
@@ -46,9 +54,13 @@ impl Rpc for RpcImpl {
             .values(&changeset)
             .get_result(&conn)?;
 
-        // TODO: send event
+        let resp = CreateResponse::new(&agent);
 
-        Ok(CreateResponse::new(&agent))
+        let event = CreateEvent::new(room.id, resp.clone());
+        let event_tx = meta.event_tx.unwrap();
+        event_tx.send(event.into()).unwrap();
+
+        Ok(resp)
     }
 
     fn read(&self, req: ReadRequest) -> Result<ReadResponse> {

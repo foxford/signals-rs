@@ -1,3 +1,6 @@
+use jsonrpc_core::{Notification, Params, Version};
+use serde::ser::Serialize;
+use serde_json;
 use std::ops::Deref;
 use uuid::Uuid;
 
@@ -24,6 +27,36 @@ impl Deref for EnvelopeMessage {
 
     fn deref(&self) -> &str {
         &self.0
+    }
+}
+
+#[derive(Debug, Serialize)]
+#[serde(tag = "type")]
+pub enum EventKind {
+    #[serde(rename = "agent.create")]
+    AgentCreate(agent::CreateEvent),
+}
+
+impl From<EventKind> for Notification {
+    fn from(event: EventKind) -> Self {
+        Notification {
+            jsonrpc: Some(Version::V2),
+            method: "event".to_string(),
+            params: Some(Params::Array(vec![serde_json::to_value(event).unwrap()])),
+        }
+    }
+}
+
+#[derive(Debug, Serialize)]
+pub struct Event<T: Serialize> {
+    #[serde(skip_serializing)]
+    pub room_id: Uuid,
+    payload: T,
+}
+
+impl<T: Serialize> Event<T> {
+    pub fn new(room_id: Uuid, payload: T) -> Event<T> {
+        Event { room_id, payload }
     }
 }
 

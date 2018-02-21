@@ -1,6 +1,9 @@
 use models;
 use uuid::Uuid;
 
+// use messages::AnotherEvent;
+use messages::{Event, EventKind};
+
 // Create
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -15,7 +18,7 @@ pub struct CreateRequestData {
     pub label: Option<String>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct CreateResponse {
     id: String,
     data: CreateResponseData,
@@ -34,10 +37,13 @@ impl CreateResponse {
     }
 }
 
-// #[derive(Debug, Serialize, Deserialize)]
-// pub struct CreatedEvent {
-//     pub payload: CreateResponsePayload,
-// }
+pub type CreateEvent = Event<CreateResponse>;
+
+impl From<CreateEvent> for EventKind {
+    fn from(event: CreateEvent) -> Self {
+        EventKind::AgentCreate(event)
+    }
+}
 
 // Create
 
