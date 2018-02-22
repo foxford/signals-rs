@@ -24,6 +24,7 @@ pub struct Agent {
 #[derive(AsChangeset, Insertable, Debug, PartialEq, Serialize, Deserialize)]
 #[table_name = "agents"]
 pub struct NewAgent {
+    pub id: Uuid,
     pub label: Option<String>,
     pub room_id: Uuid,
 }
