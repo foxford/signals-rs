@@ -138,7 +138,7 @@ impl fmt::Display for ResourceKind {
 #[derive(Debug, PartialEq)]
 pub struct AppTopic {
     pub room_id: Uuid,
-    pub resource_kind: ResourceKind,
+    pub resource: ResourceKind,
 }
 
 impl fmt::Display for AppTopic {
@@ -146,7 +146,7 @@ impl fmt::Display for AppTopic {
         write!(
             f,
             "apps/signals.netology-group.services/api/v1/rooms/{}/{}",
-            self.room_id, self.resource_kind
+            self.room_id, self.resource
         )
     }
 }
@@ -315,7 +315,7 @@ mod tests {
     fn display_app_topic() {
         let topic = Topic::App(AppTopic {
             room_id: Uuid::parse_str("058df470-73ea-43a4-b36c-e4615cad468e").unwrap(),
-            resource_kind: ResourceKind::Agents,
+            resource: ResourceKind::Agents,
         });
         let expected = "apps/signals.netology-group.services/api/v1/rooms/058df470-73ea-43a4-b36c-e4615cad468e/agents";
         assert_eq!(topic.to_string(), expected);
