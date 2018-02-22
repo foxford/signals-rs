@@ -26,5 +26,10 @@ fn main() {
         .set_client_id(mqtt_client_id)
         .set_broker(&mqtt_broker);
 
+    if let Err(err) = env::var("DATABASE_URL") {
+        println!("DATABASE_URL {}", err);
+        process::exit(1);
+    }
+
     signals::run(mqtt_options);
 }

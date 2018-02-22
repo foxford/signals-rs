@@ -11,6 +11,8 @@ extern crate jsonrpc_core;
 extern crate jsonrpc_macros;
 #[macro_use]
 extern crate nom;
+extern crate r2d2;
+extern crate r2d2_diesel;
 extern crate rumqtt;
 extern crate serde;
 #[macro_use]
@@ -18,14 +20,22 @@ extern crate serde_derive;
 extern crate serde_json;
 extern crate uuid;
 
+use diesel::PgConnection;
 use jsonrpc_core::Notification;
+use r2d2_diesel::ConnectionManager;
 use rumqtt::{Message as MqttMessage, MqttCallback, MqttClient, MqttOptions, QoS};
-use std::{process, thread};
+use std::{env, process, thread};
 use std::sync::{mpsc, Arc, Mutex};
 
 use errors::*;
 use messages::{Envelope, EventKind};
 use topic::{AppTopic, ResourceKind, Topic};
+
+macro_rules! establish_connection {
+    ($pool:expr) => (
+        &*$pool.get().expect("Error establishing DB connection")
+    )
+}
 
 pub mod errors;
 pub mod messages;
@@ -34,6 +44,8 @@ pub mod topic;
 
 pub mod schema;
 pub mod models;
+
+type DbPool = r2d2::Pool<ConnectionManager<PgConnection>>;
 
 pub fn run(mqtt_options: MqttOptions) {
     let (tx, rx) = mpsc::channel::<MqttMessage>();
@@ -62,13 +74,20 @@ pub fn run(mqtt_options: MqttOptions) {
     let handle = thread::spawn({
         let client = Arc::clone(&client);
         move || {
+            let database_url = env::var("DATABASE_URL").unwrap();
+            let manager = ConnectionManager::<PgConnection>::new(database_url);
+            let pool = r2d2::Pool::builder()
+                .build(manager)
+                .expect("Error creating pool.");
+
             let server = rpc::build_server();
 
             for msg in rx.iter() {
                 let event_tx = event_tx.clone();
+                let pool = pool.clone();
                 let mut client = client.lock().unwrap();
 
-                if let Err(ref e) = handle_message(&server, &mut client, &msg, event_tx) {
+                if let Err(ref e) = handle_message(&server, &mut client, &msg, event_tx, pool) {
                     use std::io::Write;
                     let stderr = &mut ::std::io::stderr();
                     let errmsg = "Error writing to stderr";
@@ -128,6 +147,7 @@ fn handle_message(
     mqtt_client: &mut MqttClient,
     mqtt_msg: &MqttMessage,
     event_tx: ::std::sync::mpsc::Sender<EventKind>,
+    pool: DbPool,
 ) -> Result<()> {
     println!("Received message: {:?}", mqtt_msg);
 
@@ -143,6 +163,7 @@ fn handle_message(
     let meta = rpc::Meta {
         subject: envelope.sub,
         event_tx: Some(event_tx),
+        db_pool: Some(pool),
     };
 
     let resp = server.handle_request_sync(&request, meta).unwrap();

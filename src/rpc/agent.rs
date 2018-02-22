@@ -17,17 +17,17 @@ build_rpc_trait! {
         #[rpc(meta, name = "agent.create")]
         fn create(&self, Self::Metadata, CreateRequest) -> Result<CreateResponse>;
 
-        #[rpc(name = "agent.read")]
-        fn read(&self, ReadRequest) -> Result<ReadResponse>;
+        #[rpc(meta, name = "agent.read")]
+        fn read(&self, Self::Metadata, ReadRequest) -> Result<ReadResponse>;
 
-        #[rpc(name = "agent.update")]
-        fn update(&self, UpdateRequest) -> Result<UpdateResponse>;
+        #[rpc(meta, name = "agent.update")]
+        fn update(&self, Self::Metadata, UpdateRequest) -> Result<UpdateResponse>;
 
-        #[rpc(name = "agent.delete")]
-        fn delete(&self, DeleteRequest) -> Result<DeleteResponse>;
+        #[rpc(meta, name = "agent.delete")]
+        fn delete(&self, Self::Metadata, DeleteRequest) -> Result<DeleteResponse>;
 
-        #[rpc(name = "agent.list")]
-        fn list(&self, ListRequest) -> Result<ListResponse>;
+        #[rpc(meta, name = "agent.list")]
+        fn list(&self, Self::Metadata, ListRequest) -> Result<ListResponse>;
     }
 }
 
@@ -37,12 +37,9 @@ impl Rpc for RpcImpl {
     type Metadata = rpc::Meta;
 
     fn create(&self, meta: rpc::Meta, req: CreateRequest) -> Result<CreateResponse> {
-        println!("{:?}", meta);
+        let conn = establish_connection!(meta.db_pool.unwrap());
 
-        // FIXME: use connection pool
-        let conn = establish_connection();
-
-        let room: models::Room = rooms::table.find(req.room_id).first(&conn)?;
+        let room: models::Room = rooms::table.find(req.room_id).first(conn)?;
 
         let changeset = models::NewAgent {
             id: req.id,
@@ -52,7 +49,7 @@ impl Rpc for RpcImpl {
 
         let agent: models::Agent = diesel::insert_into(agents::table)
             .values(&changeset)
-            .get_result(&conn)?;
+            .get_result(conn)?;
 
         let resp = CreateResponse::new(&agent);
 
@@ -63,21 +60,19 @@ impl Rpc for RpcImpl {
         Ok(resp)
     }
 
-    fn read(&self, req: ReadRequest) -> Result<ReadResponse> {
-        // FIXME: use connection pool
-        let conn = establish_connection();
+    fn read(&self, meta: rpc::Meta, req: ReadRequest) -> Result<ReadResponse> {
+        let conn = establish_connection!(meta.db_pool.unwrap());
 
         let agent: models::Agent = agents::table
             .filter(agents::room_id.eq(req.room_id))
             .find(req.id)
-            .first(&conn)?;
+            .first(conn)?;
 
         Ok(ReadResponse::new(&agent))
     }
 
-    fn update(&self, req: UpdateRequest) -> Result<UpdateResponse> {
-        // FIXME: use connection pool
-        let conn = establish_connection();
+    fn update(&self, meta: rpc::Meta, req: UpdateRequest) -> Result<UpdateResponse> {
+        let conn = establish_connection!(meta.db_pool.unwrap());
 
         let agent = agents::table
             .filter(agents::room_id.eq(req.room_id))
@@ -86,39 +81,32 @@ impl Rpc for RpcImpl {
         let agent: models::Agent = match req.data.label {
             Some(label) => diesel::update(agent)
                 .set(agents::label.eq(label))
-                .get_result(&conn)?,
-            None => agent.first(&conn)?,
+                .get_result(conn)?,
+            None => agent.first(conn)?,
         };
 
         Ok(UpdateResponse::new(&agent))
     }
 
-    fn delete(&self, req: DeleteRequest) -> Result<DeleteResponse> {
-        // FIXME: use connection pool
-        let conn = establish_connection();
+    fn delete(&self, meta: rpc::Meta, req: DeleteRequest) -> Result<DeleteResponse> {
+        let conn = establish_connection!(meta.db_pool.unwrap());
 
         let agent = agents::table
             .filter(agents::room_id.eq(req.room_id))
             .find(req.id);
 
-        let agent: models::Agent = diesel::delete(agent).get_result(&conn)?;
+        let agent: models::Agent = diesel::delete(agent).get_result(conn)?;
 
         Ok(DeleteResponse::new(&agent))
     }
 
-    fn list(&self, req: ListRequest) -> Result<ListResponse> {
-        // FIXME: use connection pool
-        let conn = establish_connection();
+    fn list(&self, meta: rpc::Meta, req: ListRequest) -> Result<ListResponse> {
+        let conn = establish_connection!(meta.db_pool.unwrap());
 
-        let room: models::Room = rooms::table.find(req.room_id).first(&conn)?;
+        let room: models::Room = rooms::table.find(req.room_id).first(conn)?;
 
-        let agents = models::Agent::belonging_to(&room).load::<models::Agent>(&conn)?;
+        let agents = models::Agent::belonging_to(&room).load::<models::Agent>(conn)?;
 
         Ok(ListResponse::new(&agents))
     }
-}
-
-fn establish_connection() -> PgConnection {
-    let database_url = ::std::env::var("DATABASE_URL").expect("DATABASE_URL must be set");
-    PgConnection::establish(&database_url).unwrap()
 }

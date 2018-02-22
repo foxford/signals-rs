@@ -1,6 +1,7 @@
 use jsonrpc_core::{MetaIoHandler, Metadata};
 use std::sync::mpsc::Sender;
 
+use DbPool;
 use messages::{EnvelopeSubject, EventKind};
 use rpc::agent::Rpc as AgentRpc;
 use rpc::ping::Rpc as PingRpc;
@@ -13,10 +14,11 @@ mod room;
 mod subscription;
 
 // TODO: remove Default on new jsonrpc_core version
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Default)]
 pub struct Meta {
     pub subject: EnvelopeSubject,
     pub event_tx: Option<Sender<EventKind>>,
+    pub db_pool: Option<DbPool>,
 }
 
 impl Metadata for Meta {}
