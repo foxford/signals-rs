@@ -2,7 +2,6 @@ use diesel;
 use diesel::prelude::*;
 
 use errors::Result;
-use messages::room;
 use models;
 use schema::rooms;
 
@@ -39,7 +38,7 @@ impl Rpc for RpcImpl {
             .values(&req.data)
             .get_result(&conn)?;
 
-        Ok(room::CreateResponse::new(&room))
+        Ok(CreateResponse::new(&room))
     }
 
     fn read(&self, req: ReadRequest) -> Result<ReadResponse> {
