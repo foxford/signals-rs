@@ -87,7 +87,7 @@ pub fn run(mqtt_options: MqttOptions) {
                 let topic = match event {
                     EventKind::AgentCreate(ref event) => AppTopic {
                         room_id: event.room_id,
-                        resource_kind: ResourceKind::Agents,
+                        resource: ResourceKind::Agents,
                     },
                 };
 

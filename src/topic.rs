@@ -1,4 +1,5 @@
 use nom::alphanumeric;
+use serde::{Serialize, Serializer};
 use std::fmt;
 use std::str::FromStr;
 use uuid::Uuid;
@@ -122,7 +123,8 @@ impl fmt::Display for AgentTopicKind {
     }
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "lowercase")]
 pub enum ResourceKind {
     Agents,
     Tracks,
@@ -138,7 +140,7 @@ impl fmt::Display for ResourceKind {
 #[derive(Debug, PartialEq)]
 pub struct AppTopic {
     pub room_id: Uuid,
-    pub resource_kind: ResourceKind,
+    pub resource: ResourceKind,
 }
 
 impl fmt::Display for AppTopic {
@@ -146,8 +148,17 @@ impl fmt::Display for AppTopic {
         write!(
             f,
             "apps/signals.netology-group.services/api/v1/rooms/{}/{}",
-            self.room_id, self.resource_kind
+            self.room_id, self.resource
         )
+    }
+}
+
+impl Serialize for AppTopic {
+    fn serialize<S>(&self, serializer: S) -> ::std::result::Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_str(&self.to_string())
     }
 }
 
@@ -190,6 +201,7 @@ mod tests {
     use super::*;
     use nom::ErrorKind::*;
     use nom::IResult::{Done, Error};
+    use serde_json;
 
     #[test]
     fn parse_agent_topic() {
@@ -315,9 +327,28 @@ mod tests {
     fn display_app_topic() {
         let topic = Topic::App(AppTopic {
             room_id: Uuid::parse_str("058df470-73ea-43a4-b36c-e4615cad468e").unwrap(),
-            resource_kind: ResourceKind::Agents,
+            resource: ResourceKind::Agents,
         });
         let expected = "apps/signals.netology-group.services/api/v1/rooms/058df470-73ea-43a4-b36c-e4615cad468e/agents";
         assert_eq!(topic.to_string(), expected);
+    }
+
+    #[test]
+    fn serialize_resource_kind() {
+        assert_eq!(
+            serde_json::to_string(&ResourceKind::Agents).unwrap(),
+            r#""agents""#
+        );
+    }
+
+    #[test]
+    fn serialize_app_topic() {
+        let topic = AppTopic {
+            room_id: Uuid::parse_str("050b7c6f-795c-4cb4-aeea-5ee3f9083de2").unwrap(),
+            resource: ResourceKind::Agents,
+        };
+
+        let expected = r#""apps/signals.netology-group.services/api/v1/rooms/050b7c6f-795c-4cb4-aeea-5ee3f9083de2/agents""#;
+        assert_eq!(serde_json::to_string(&topic).unwrap(), expected);
     }
 }

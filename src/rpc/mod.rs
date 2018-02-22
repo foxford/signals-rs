@@ -5,10 +5,12 @@ use messages::{EnvelopeSubject, EventKind};
 use rpc::agent::Rpc as AgentRpc;
 use rpc::ping::Rpc as PingRpc;
 use rpc::room::Rpc as RoomRpc;
+use rpc::subscription::Rpc as SubscriptionRpc;
 
 mod ping;
 mod agent;
 mod room;
+mod subscription;
 
 // TODO: remove Default on new jsonrpc_core version
 #[derive(Clone, Debug, Default)]
@@ -28,6 +30,9 @@ pub fn build_server() -> Server {
     io.extend_with(rpc.to_delegate());
 
     let rpc = room::RpcImpl {};
+    io.extend_with(rpc.to_delegate());
+
+    let rpc = subscription::RpcImpl {};
     io.extend_with(rpc.to_delegate());
 
     let rpc = agent::RpcImpl {};
