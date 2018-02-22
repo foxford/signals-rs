@@ -12,7 +12,7 @@ pub type CreateRequestData = models::NewRoom;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct CreateResponse {
-    id: String,
+    id: Uuid,
     data: CreateResponseData,
 }
 
@@ -21,7 +21,7 @@ type CreateResponseData = CreateRequestData;
 impl CreateResponse {
     pub fn new(room: &models::Room) -> CreateResponse {
         CreateResponse {
-            id: room.id.to_string(),
+            id: room.id,
             data: CreateResponseData {
                 label: Some(room.label.clone()),
             },
@@ -71,7 +71,7 @@ impl ListResponse {
         let data: Vec<ListResponseData> = rooms
             .iter()
             .map(|room| ListResponseData {
-                id: room.id.to_string(),
+                id: room.id,
                 data: ReadResponseData {
                     label: Some(room.label.clone()),
                 },

@@ -20,7 +20,7 @@ pub struct CreateRequestData {
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct CreateResponse {
-    id: String,
+    id: Uuid,
     data: CreateResponseData,
 }
 
@@ -29,7 +29,7 @@ type CreateResponseData = CreateRequestData;
 impl CreateResponse {
     pub fn new(agent: &models::Agent) -> CreateResponse {
         CreateResponse {
-            id: agent.id.to_string(),
+            id: agent.id,
             data: CreateResponseData {
                 label: Some(agent.label.clone()),
             },
@@ -89,7 +89,7 @@ impl ListResponse {
         let data: Vec<ListResponseData> = agents
             .iter()
             .map(|agent| ListResponseData {
-                id: agent.id.to_string(),
+                id: agent.id,
                 data: ReadResponseData {
                     label: Some(agent.label.clone()),
                 },
