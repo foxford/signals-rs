@@ -2,7 +2,6 @@ extern crate rumqtt;
 extern crate signals;
 
 use std::env;
-use std::net::{Ipv4Addr, SocketAddr};
 
 macro_rules! invalid_env {
     ($var:expr, $err:ident) => ({
@@ -12,15 +11,12 @@ macro_rules! invalid_env {
 }
 
 fn main() {
-    let mqtt_host: Ipv4Addr = match env::var("MQTT_HOST") {
-        Ok(val) => match val.parse() {
-            Ok(addr) => addr,
-            Err(err) => invalid_env!("MQTT_HOST", err),
-        },
+    let mqtt_host = match env::var("MQTT_HOST") {
+        Ok(val) => val,
         Err(err) => invalid_env!("MQTT_HOST", err),
     };
-
-    let mqtt_url = SocketAddr::from((mqtt_host, 1883));
+    let mqtt_port = 1883;
+    let mqtt_url = format!("{}:{}", mqtt_host, mqtt_port);
 
     let mqtt_client_id = match env::var("MQTT_CLIENT_ID") {
         Ok(val) => val,
@@ -31,7 +27,7 @@ fn main() {
         .set_keep_alive(5)
         .set_reconnect(3)
         .set_client_id(mqtt_client_id)
-        .set_broker(&mqtt_url.to_string());
+        .set_broker(&mqtt_url);
 
     if let Err(err) = env::var("DATABASE_URL") {
         invalid_env!("DATABASE_URL {}", err);
