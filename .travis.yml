@@ -1,12 +1,30 @@
 language: rust
-rust:
-  - nightly
 cache: cargo
-before_script:
-  - rustup component add rustfmt-preview
+sudo: false
+
+env:
+matrix:
+  include:
+    - rust: nightly
+    - rust: nightly
+      env: RUSTFMT=1
+      before_script:
+        - rustup component add rustfmt-preview
+      script:
+        - cargo fmt -- --write-mode=diff
+    - rust: nightly
+      before_script:
+        - cargo install clippy --debug --force
+      script:
+        - cargo clippy
+  allow_failures:
+    - rust: nightly
+      env:
+  fast_finish: true
+
 script:
-  - cargo fmt -- --write-mode=diff
   - cargo build
   - cargo test
+
 notifications:
   email: false

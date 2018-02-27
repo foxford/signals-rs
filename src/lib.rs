@@ -1,6 +1,4 @@
 #![recursion_limit = "1024"]
-#![cfg_attr(test, feature(plugin))]
-#![cfg_attr(test, plugin(clippy))]
 
 #[macro_use]
 extern crate diesel;
