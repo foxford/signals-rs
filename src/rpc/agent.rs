@@ -1,7 +1,9 @@
 use diesel;
 use diesel::prelude::*;
+use serde_json::{to_value, Value};
+use uuid::Uuid;
 
-use errors::Result;
+use errors::{ErrorKind, Result};
 use models;
 use rpc;
 use schema::{agents, rooms};
@@ -103,9 +105,19 @@ impl Rpc for RpcImpl {
     fn list(&self, meta: rpc::Meta, req: ListRequest) -> Result<ListResponse> {
         let conn = establish_connection!(meta.db_pool.unwrap());
 
-        let room: models::Room = rooms::table.find(req.room_id).first(conn)?;
+        let mut query = agents::table.into_boxed();
+        let fq: Value = to_value(req.fq)?;
 
-        let agents = models::Agent::belonging_to(&room).load::<models::Agent>(conn)?;
+        match fq["room_id"] {
+            Value::String(ref string) => {
+                let room_id = Uuid::parse_str(string)?;
+                query = query.filter(agents::room_id.eq(room_id));
+            }
+            Value::Null => {}
+            _ => Err(ErrorKind::BadRequest)?,
+        }
+
+        let agents = query.load::<models::Agent>(conn)?;
 
         Ok(ListResponse::new(&agents))
     }

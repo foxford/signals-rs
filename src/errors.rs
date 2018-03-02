@@ -8,6 +8,7 @@ error_chain! {
         Mqtt(::rumqtt::Error);
         Nom(::nom::ErrorKind);
         Utf8(::std::string::FromUtf8Error);
+        Uuid(::uuid::ParseError);
     }
 
     errors {

@@ -7,6 +7,7 @@ use uuid::Uuid;
 pub mod agent;
 pub mod room;
 pub mod subscription;
+pub mod query_parameters;
 
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
 pub struct Envelope {

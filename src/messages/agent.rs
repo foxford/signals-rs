@@ -3,6 +3,7 @@ use uuid::Uuid;
 
 // use messages::AnotherEvent;
 use messages::{Event, EventKind};
+use messages::query_parameters::QueryParameters;
 
 // Create
 
@@ -76,10 +77,7 @@ pub type DeleteResponse = ReadResponse;
 
 // List
 
-#[derive(Debug, Serialize, Deserialize)]
-pub struct ListRequest {
-    pub room_id: Uuid,
-}
+pub type ListRequest = QueryParameters;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ListResponse(Vec<ListResponseData>);
