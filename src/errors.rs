@@ -29,16 +29,18 @@ impl<'a> From<::nom::Err<::nom::types::CompleteStr<'a>>> for Error {
 
 impl From<Error> for jsonrpc::Error {
     fn from(err: Error) -> Self {
-        match err {
+        let code = match err {
             Error(ErrorKind::Diesel(ref e), _) => match *e {
-                diesel::result::Error::NotFound => jsonrpc::Error {
-                    code: jsonrpc::ErrorCode::ServerError(404),
-                    message: err.description().into(),
-                    data: None,
-                },
-                _ => jsonrpc::Error::internal_error(),
+                diesel::result::Error::NotFound => 404,
+                _ => 422,
             },
-            _ => jsonrpc::Error::internal_error(),
+            _ => 500,
+        };
+
+        jsonrpc::Error {
+            code: jsonrpc::ErrorCode::ServerError(code),
+            message: err.description().into(),
+            data: None,
         }
     }
 }
