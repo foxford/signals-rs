@@ -7,6 +7,7 @@ use uuid::Uuid;
 pub mod agent;
 pub mod room;
 pub mod subscription;
+pub mod track;
 pub mod query_parameters;
 
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
@@ -39,6 +40,12 @@ pub enum EventKind {
     AgentCreate(agent::CreateEvent),
     #[serde(rename = "agent.delete")]
     AgentDelete(agent::DeleteEvent),
+    #[serde(rename = "track.create")]
+    TrackCreate(track::CreateEvent),
+    #[serde(rename = "track.update")]
+    TrackUpdate(track::UpdateEvent),
+    #[serde(rename = "track.delete")]
+    TrackDelete(track::DeleteEvent),
 }
 
 impl From<EventKind> for Notification {

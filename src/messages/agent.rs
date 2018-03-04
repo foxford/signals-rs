@@ -1,7 +1,6 @@
 use models;
 use uuid::Uuid;
 
-// use messages::AnotherEvent;
 use messages::{Event, EventKind};
 use messages::query_parameters::QueryParameters;
 

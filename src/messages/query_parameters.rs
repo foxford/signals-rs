@@ -75,7 +75,7 @@ named!(room_filter<CompleteStr, Filter>, preceded!(
     tag_s!("room_id:"),
     map!(
         map_res!(take_s!(36), |s: CompleteStr| Uuid::from_str(s.0)),
-        |val| Filter::RoomId(val)
+        Filter::RoomId
     )
 ));
 
