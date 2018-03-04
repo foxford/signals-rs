@@ -1,4 +1,5 @@
 use nom::alphanumeric;
+use nom::types::CompleteStr;
 use serde::{Serialize, Serializer};
 use std::fmt;
 use std::str::FromStr;
@@ -6,29 +7,29 @@ use uuid::Uuid;
 
 use errors::*;
 
-named!(ping_topic<&str, Topic>,
+named!(ping_topic<CompleteStr, Topic>,
     alt!(
         map!(tag_s!("ping"), |_| Topic::Ping(PingTopicKind::Ping)) |
         map!(tag_s!("pong"), |_| Topic::Ping(PingTopicKind::Pong))
     )
 );
 
-named!(agent_topic<&str, Topic>,
+named!(agent_topic<CompleteStr, Topic>,
     do_parse!(
         tag_s!("agents/") >>
-        agent_id: map_res!(take_until_s!("/"), FromStr::from_str) >>
+        agent_id: map_res!(take_until_s!("/"), |s: CompleteStr| FromStr::from_str(s.0)) >>
         tag_s!("/") >>
         kind: alt!(map!(tag_s!("in"), |_| AgentTopicKind::In) | map!(tag_s!("out"), |_| AgentTopicKind::Out)) >>
         tag_s!("/signals.netology-group.services/api/") >>
-        version: map_res!(alphanumeric, FromStr::from_str) >>
-        opt!(complete!(tag_s!("/"))) >>
+        version: map_res!(alphanumeric, |s: CompleteStr| FromStr::from_str(s.0)) >>
+        opt!(tag_s!("/")) >>
         eof!() >>
 
         (Topic::Agent(AgentTopic { kind, agent_id, version }))
     )
 );
 
-named!(topic<&str, Topic>,
+named!(topic<CompleteStr, Topic>,
     alt!(ping_topic | agent_topic)
 );
 
@@ -41,7 +42,8 @@ pub enum Topic {
 
 impl Topic {
     pub fn parse(topic_str: &str) -> Result<Topic> {
-        Ok(topic(topic_str).to_result()?)
+        let (_, t) = topic(CompleteStr(topic_str))?;
+        Ok(t)
     }
 
     pub fn get_reverse(&self) -> Topic {
@@ -199,55 +201,63 @@ impl Reversible for AgentTopic {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use nom::Err::Error as NomError;
     use nom::ErrorKind::*;
-    use nom::IResult::{Done, Error};
     use serde_json;
 
     #[test]
     fn parse_agent_topic() {
-        let topic = agent_topic("agents/e19c94cf-53eb-4048-9c94-7ae74ff6d912/out/signals.netology-group.services/api/v1");
+        let topic = agent_topic(CompleteStr("agents/e19c94cf-53eb-4048-9c94-7ae74ff6d912/out/signals.netology-group.services/api/v1"));
         let topic_exp = Topic::Agent(AgentTopic {
             kind: AgentTopicKind::Out,
             agent_id: Uuid::parse_str("e19c94cf-53eb-4048-9c94-7ae74ff6d912").unwrap(),
             version: "v1".to_string(),
         });
-        assert_eq!(topic, Done("", topic_exp));
+        assert_eq!(topic, Ok((CompleteStr(""), topic_exp)));
 
-        let topic = agent_topic("agents/e19c94cf-53eb-4048-9c94-7ae74ff6d912/out/signals.netology-group.services/api/v1/");
+        let topic = agent_topic(CompleteStr("agents/e19c94cf-53eb-4048-9c94-7ae74ff6d912/out/signals.netology-group.services/api/v1/"));
         let topic_exp = Topic::Agent(AgentTopic {
             kind: AgentTopicKind::Out,
             agent_id: Uuid::parse_str("e19c94cf-53eb-4048-9c94-7ae74ff6d912").unwrap(),
             version: "v1".to_string(),
         });
-        assert_eq!(topic, Done("", topic_exp));
+        assert_eq!(topic, Ok((CompleteStr(""), topic_exp)));
     }
 
     #[test]
     fn parse_agent_topic_with_wrong_uuid() {
-        let topic = agent_topic(
+        let topic = agent_topic(CompleteStr(
             "agents/e19c94cf-53eb-4048-9c94-7ae74ff6d91/out/signals.netology-group.services/api/v1",
-        );
-        assert_eq!(topic, Error(MapRes));
+        ));
+
+        assert_eq!(topic, Err(NomError(error_position!(CompleteStr("e19c94cf-53eb-4048-9c94-7ae74ff6d91/out/signals.netology-group.services/api/v1"), MapRes))));
     }
 
     #[test]
     fn parse_agent_topic_with_extra_words() {
-        let topic = agent_topic(
-            "agents/e19c94cf-53eb-4048-9c94-7ae74ff6d912/out/signals.netology-group.services/api/v1/rooms",
+        let topic = agent_topic(CompleteStr("agents/e19c94cf-53eb-4048-9c94-7ae74ff6d912/out/signals.netology-group.services/api/v1/rooms"));
+        assert_eq!(
+            topic,
+            Err(NomError(error_position!(CompleteStr("rooms"), Eof)))
         );
-        assert_eq!(topic, Error(Eof));
     }
 
     #[test]
     fn parse_ping_topic() {
-        let topic = ping_topic("ping");
-        assert_eq!(topic, Done("", Topic::Ping(PingTopicKind::Ping)));
+        let topic = ping_topic(CompleteStr("ping"));
+        assert_eq!(
+            topic,
+            Ok((CompleteStr(""), Topic::Ping(PingTopicKind::Ping)))
+        );
     }
 
     #[test]
     fn parse_pong_topic() {
-        let topic = ping_topic("pong");
-        assert_eq!(topic, Done("", Topic::Ping(PingTopicKind::Pong)));
+        let topic = ping_topic(CompleteStr("pong"));
+        assert_eq!(
+            topic,
+            Ok((CompleteStr(""), Topic::Ping(PingTopicKind::Pong)))
+        );
     }
 
     #[test]

@@ -6,7 +6,6 @@ error_chain! {
         Diesel(::diesel::result::Error);
         Json(::serde_json::Error);
         Mqtt(::rumqtt::Error);
-        Nom(::nom::ErrorKind);
         Utf8(::std::string::FromUtf8Error);
         Uuid(::uuid::ParseError);
     }
@@ -14,6 +13,17 @@ error_chain! {
     errors {
         BadRequest
         NotFound
+        Nom(kind: ::nom::ErrorKind) {
+            description("parsing error")
+            display("parsing error: {:?}", kind)
+        }
+    }
+}
+
+impl<'a> From<::nom::Err<::nom::types::CompleteStr<'a>>> for Error {
+    fn from(err: ::nom::Err<::nom::types::CompleteStr<'a>>) -> Error {
+        let kind = err.into_error_kind();
+        Error::from_kind(ErrorKind::Nom(kind))
     }
 }
 
