@@ -1,7 +1,7 @@
+use std::str::FromStr;
+
 use diesel;
 use diesel::prelude::*;
-use serde_json::{to_value, Value};
-use uuid::Uuid;
 
 use errors::{ErrorKind, Result};
 use models;
@@ -11,6 +11,7 @@ use schema::{agents, rooms};
 use messages::agent::{CreateEvent, CreateRequest, CreateResponse, DeleteRequest, DeleteResponse,
                       ListRequest, ListResponse, ReadRequest, ReadResponse, UpdateRequest,
                       UpdateResponse};
+use messages::query_parameters;
 
 build_rpc_trait! {
     pub trait Rpc {
@@ -106,15 +107,17 @@ impl Rpc for RpcImpl {
         let conn = establish_connection!(meta.db_pool.unwrap());
 
         let mut query = agents::table.into_boxed();
-        let fq: Value = to_value(req.fq)?;
-
-        match fq["room_id"] {
-            Value::String(ref string) => {
-                let room_id = Uuid::parse_str(string)?;
-                query = query.filter(agents::room_id.eq(room_id));
+        if let Some(fq) = req.fq {
+            let expr = query_parameters::Expr::from_str(&fq)?;
+            match expr {
+                query_parameters::Expr::Value(filter) => match filter {
+                    query_parameters::Filter::RoomId(id) => {
+                        query = query.filter(agents::room_id.eq(id));
+                    }
+                    _ => Err(ErrorKind::BadRequest)?,
+                },
+                _ => Err(ErrorKind::BadRequest)?,
             }
-            Value::Null => {}
-            _ => Err(ErrorKind::BadRequest)?,
         }
 
         let agents = query.load::<models::Agent>(conn)?;
