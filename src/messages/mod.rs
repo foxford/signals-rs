@@ -37,6 +37,8 @@ impl Deref for EnvelopeMessage {
 pub enum EventKind {
     #[serde(rename = "agent.create")]
     AgentCreate(agent::CreateEvent),
+    #[serde(rename = "agent.delete")]
+    AgentDelete(agent::DeleteEvent),
 }
 
 impl From<EventKind> for Notification {

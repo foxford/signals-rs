@@ -71,7 +71,33 @@ pub type UpdateResponse = CreateResponse;
 // Delete
 
 pub type DeleteRequest = ReadRequest;
-pub type DeleteResponse = ReadResponse;
+
+#[derive(Clone, Debug, Serialize)]
+pub struct DeleteResponse {
+    id: Uuid,
+    data: DeleteResponseData,
+}
+
+type DeleteResponseData = ReadResponseData;
+
+impl DeleteResponse {
+    pub fn new(agent: &models::Agent) -> DeleteResponse {
+        DeleteResponse {
+            id: agent.id,
+            data: DeleteResponseData {
+                label: Some(agent.label.clone()),
+            },
+        }
+    }
+}
+
+pub type DeleteEvent = Event<DeleteResponse>;
+
+impl From<DeleteEvent> for EventKind {
+    fn from(event: DeleteEvent) -> Self {
+        EventKind::AgentDelete(event)
+    }
+}
 
 // Delete
 

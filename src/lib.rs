@@ -106,11 +106,15 @@ pub fn run(mqtt_options: MqttOptions) {
                         room_id: event.room_id,
                         resource: ResourceKind::Agents,
                     },
+                    EventKind::AgentDelete(ref event) => AppTopic {
+                        room_id: event.room_id,
+                        resource: ResourceKind::Agents,
+                    },
                 };
 
                 let note = Notification::from(event);
                 let payload = serde_json::to_string(&note).unwrap();
-                println!("{}", payload);
+                println!("EVENT: {}", payload);
 
                 let mut client = client.lock().unwrap();
                 client

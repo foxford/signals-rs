@@ -8,9 +8,9 @@ use models;
 use rpc;
 use schema::{agents, rooms};
 
-use messages::agent::{CreateEvent, CreateRequest, CreateResponse, DeleteRequest, DeleteResponse,
-                      ListRequest, ListResponse, ReadRequest, ReadResponse, UpdateRequest,
-                      UpdateResponse};
+use messages::agent::{CreateEvent, CreateRequest, CreateResponse, DeleteEvent, DeleteRequest,
+                      DeleteResponse, ListRequest, ListResponse, ReadRequest, ReadResponse,
+                      UpdateRequest, UpdateResponse};
 use messages::query_parameters;
 
 build_rpc_trait! {
@@ -100,7 +100,13 @@ impl Rpc for RpcImpl {
 
         let agent: models::Agent = diesel::delete(agent).get_result(conn)?;
 
-        Ok(DeleteResponse::new(&agent))
+        let resp = DeleteResponse::new(&agent);
+
+        let event = DeleteEvent::new(req.room_id, resp.clone());
+        let event_tx = meta.event_tx.unwrap();
+        event_tx.send(event.into()).unwrap();
+
+        Ok(resp)
     }
 
     fn list(&self, meta: rpc::Meta, req: ListRequest) -> Result<ListResponse> {
