@@ -81,12 +81,9 @@ impl Rpc for RpcImpl {
             .filter(agents::room_id.eq(req.room_id))
             .find(req.id);
 
-        let agent: models::Agent = match req.data.label {
-            Some(label) => diesel::update(agent)
-                .set(agents::label.eq(label))
-                .get_result(conn)?,
-            None => agent.first(conn)?,
-        };
+        let agent: models::Agent = diesel::update(agent)
+            .set(agents::label.eq(req.data.label))
+            .get_result(conn)?;
 
         Ok(UpdateResponse::new(&agent))
     }

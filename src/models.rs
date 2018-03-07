@@ -25,6 +25,6 @@ pub struct Agent {
 #[table_name = "agents"]
 pub struct NewAgent {
     pub id: Uuid,
-    pub label: Option<String>,
+    pub label: String,
     pub room_id: Uuid,
 }
