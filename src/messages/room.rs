@@ -23,7 +23,7 @@ impl CreateResponse {
         CreateResponse {
             id: room.id,
             data: CreateResponseData {
-                label: Some(room.label.clone()),
+                label: room.label.clone(),
             },
         }
     }
@@ -73,7 +73,7 @@ impl ListResponse {
             .map(|room| ListResponseData {
                 id: room.id,
                 data: ReadResponseData {
-                    label: Some(room.label.clone()),
+                    label: room.label.clone(),
                 },
             })
             .collect();
