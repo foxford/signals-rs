@@ -16,7 +16,7 @@ pub struct CreateRequest {
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct CreateRequestData {
-    pub label: Option<String>,
+    pub label: String,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -32,7 +32,7 @@ impl CreateResponse {
         CreateResponse {
             id: agent.id,
             data: CreateResponseData {
-                label: Some(agent.label.clone()),
+                label: agent.label.clone(),
             },
         }
     }
@@ -85,7 +85,7 @@ impl DeleteResponse {
         DeleteResponse {
             id: agent.id,
             data: DeleteResponseData {
-                label: Some(agent.label.clone()),
+                label: agent.label.clone(),
             },
         }
     }
@@ -115,7 +115,7 @@ impl ListResponse {
             .map(|agent| ListResponseData {
                 id: agent.id,
                 data: ReadResponseData {
-                    label: Some(agent.label.clone()),
+                    label: agent.label.clone(),
                 },
             })
             .collect();

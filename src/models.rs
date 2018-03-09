@@ -10,7 +10,7 @@ pub struct Room {
 #[derive(AsChangeset, Insertable, Debug, PartialEq, Serialize, Deserialize)]
 #[table_name = "rooms"]
 pub struct NewRoom {
-    pub label: Option<String>,
+    pub label: String,
 }
 
 #[derive(Associations, Identifiable, Queryable, Debug)]
@@ -25,6 +25,6 @@ pub struct Agent {
 #[table_name = "agents"]
 pub struct NewAgent {
     pub id: Uuid,
-    pub label: Option<String>,
+    pub label: String,
     pub room_id: Uuid,
 }

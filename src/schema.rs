@@ -1,7 +1,7 @@
 table! {
     agents (id) {
         id -> Uuid,
-        label -> Varchar,
+        label -> Text,
         room_id -> Uuid,
     }
 }
@@ -9,7 +9,7 @@ table! {
 table! {
     rooms (id) {
         id -> Uuid,
-        label -> Varchar,
+        label -> Text,
     }
 }
 
