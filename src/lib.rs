@@ -9,8 +9,6 @@ extern crate jsonrpc_core;
 extern crate jsonrpc_macros;
 #[macro_use]
 extern crate nom;
-extern crate r2d2;
-extern crate r2d2_diesel;
 extern crate rumqtt;
 extern crate serde;
 #[macro_use]
@@ -18,9 +16,8 @@ extern crate serde_derive;
 extern crate serde_json;
 extern crate uuid;
 
-use diesel::PgConnection;
+use diesel::{PgConnection, r2d2};
 use jsonrpc_core::Notification;
-use r2d2_diesel::ConnectionManager;
 use rumqtt::{Message as MqttMessage, MqttCallback, MqttClient, MqttOptions, QoS};
 use std::{env, process, thread};
 use std::sync::{mpsc, Arc, Mutex};
@@ -31,7 +28,7 @@ use topic::{AppTopic, ResourceKind, Topic};
 
 macro_rules! establish_connection {
     ($pool:expr) => (
-        &*$pool.get().expect("Error establishing DB connection")
+        &$pool.get().expect("Error establishing DB connection")
     )
 }
 
@@ -43,7 +40,7 @@ pub mod topic;
 pub mod schema;
 pub mod models;
 
-type DbPool = r2d2::Pool<ConnectionManager<PgConnection>>;
+type DbPool = r2d2::Pool<r2d2::ConnectionManager<PgConnection>>;
 
 pub fn run(mqtt_options: MqttOptions) {
     let (tx, rx) = mpsc::channel::<MqttMessage>();
@@ -73,7 +70,7 @@ pub fn run(mqtt_options: MqttOptions) {
         let client = Arc::clone(&client);
         move || {
             let database_url = env::var("DATABASE_URL").unwrap();
-            let manager = ConnectionManager::<PgConnection>::new(database_url);
+            let manager = r2d2::ConnectionManager::<PgConnection>::new(database_url);
             let pool = r2d2::Pool::builder()
                 .build(manager)
                 .expect("Error creating pool.");
