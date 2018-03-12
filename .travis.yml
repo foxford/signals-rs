@@ -1,10 +1,14 @@
 language: rust
 cache: cargo
 sudo: false
-
-env:
+git:
+  depth: 1
+notifications:
+  email: false
 matrix:
   include:
+    - rust: stable
+      if: branch != master OR type != push
     - rust: nightly
     - rust: nightly
       env: RUSTFMT=1
@@ -17,14 +21,28 @@ matrix:
         - cargo install clippy --debug --force
       script:
         - cargo clippy
+    - rust: stable
+      if: branch = master AND type = push
+      env:
+        - CLOUDSDK_CORE_DISABLE_PROMPTS=1
+      before_script:
+        - cargo install mdbook
+      after_success:
+        - |
+          if [ ! -d "$HOME/google-cloud-sdk/bin" ]; then rm -rf $HOME/google-cloud-sdk; curl https://sdk.cloud.google.com | bash; fi &&
+          $HOME/google-cloud-sdk/install.sh -q &&
+          source $HOME/google-cloud-sdk/path.bash.inc &&
+          openssl aes-256-cbc -K $encrypted_337e78d77263_key -iv $encrypted_337e78d77263_iv -in .travis-key.json.enc -out .travis-key.json -d &&
+          gcloud auth activate-service-account --key-file .travis-key.json &&
+          rm -f .travis-key.json &&
+          mdbook build docs/ --dest-dir site/book/ &&
+          cargo doc --no-deps &&
+          mv target/doc docs/site/rustdoc &&
+          gsutil cp -ra public-read docs/site/* gs://signals-rs.docs.netology-group.services
+  script:
+    - cargo build
+    - cargo test
   allow_failures:
     - rust: nightly
       env:
   fast_finish: true
-
-script:
-  - cargo build
-  - cargo test
-
-notifications:
-  email: false
