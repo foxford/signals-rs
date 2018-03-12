@@ -6,7 +6,7 @@ use diesel::prelude::*;
 use errors::{ErrorKind, Result};
 use models;
 use rpc;
-use schema::{agents, rooms};
+use schema::{agent, room};
 
 use messages::agent::{CreateEvent, CreateRequest, CreateResponse, DeleteEvent, DeleteRequest,
                       DeleteResponse, ListRequest, ListResponse, ReadRequest, ReadResponse,
@@ -42,7 +42,7 @@ impl Rpc for RpcImpl {
     fn create(&self, meta: rpc::Meta, req: CreateRequest) -> Result<CreateResponse> {
         let conn = establish_connection!(meta.db_pool.unwrap());
 
-        let room: models::Room = rooms::table.find(req.room_id).first(conn)?;
+        let room: models::Room = room::table.find(req.room_id).first(conn)?;
 
         let changeset = models::NewAgent {
             id: req.id,
@@ -50,7 +50,7 @@ impl Rpc for RpcImpl {
             room_id: room.id,
         };
 
-        let agent: models::Agent = diesel::insert_into(agents::table)
+        let agent: models::Agent = diesel::insert_into(agent::table)
             .values(&changeset)
             .get_result(conn)?;
 
@@ -66,8 +66,8 @@ impl Rpc for RpcImpl {
     fn read(&self, meta: rpc::Meta, req: ReadRequest) -> Result<ReadResponse> {
         let conn = establish_connection!(meta.db_pool.unwrap());
 
-        let agent: models::Agent = agents::table
-            .filter(agents::room_id.eq(req.room_id))
+        let agent: models::Agent = agent::table
+            .filter(agent::room_id.eq(req.room_id))
             .find(req.id)
             .first(conn)?;
 
@@ -77,12 +77,12 @@ impl Rpc for RpcImpl {
     fn update(&self, meta: rpc::Meta, req: UpdateRequest) -> Result<UpdateResponse> {
         let conn = establish_connection!(meta.db_pool.unwrap());
 
-        let agent = agents::table
-            .filter(agents::room_id.eq(req.room_id))
+        let agent = agent::table
+            .filter(agent::room_id.eq(req.room_id))
             .find(req.id);
 
         let agent: models::Agent = diesel::update(agent)
-            .set(agents::label.eq(req.data.label))
+            .set(agent::label.eq(req.data.label))
             .get_result(conn)?;
 
         Ok(UpdateResponse::new(&agent))
@@ -91,8 +91,8 @@ impl Rpc for RpcImpl {
     fn delete(&self, meta: rpc::Meta, req: DeleteRequest) -> Result<DeleteResponse> {
         let conn = establish_connection!(meta.db_pool.unwrap());
 
-        let agent = agents::table
-            .filter(agents::room_id.eq(req.room_id))
+        let agent = agent::table
+            .filter(agent::room_id.eq(req.room_id))
             .find(req.id);
 
         let agent: models::Agent = diesel::delete(agent).get_result(conn)?;
@@ -109,13 +109,13 @@ impl Rpc for RpcImpl {
     fn list(&self, meta: rpc::Meta, req: ListRequest) -> Result<ListResponse> {
         let conn = establish_connection!(meta.db_pool.unwrap());
 
-        let mut query = agents::table.into_boxed();
+        let mut query = agent::table.into_boxed();
         if let Some(fq) = req.fq {
             let expr = query_parameters::Expr::from_str(&fq)?;
             match expr {
                 query_parameters::Expr::Value(filter) => match filter {
                     query_parameters::Filter::RoomId(id) => {
-                        query = query.filter(agents::room_id.eq(id));
+                        query = query.filter(agent::room_id.eq(id));
                     }
                     _ => Err(ErrorKind::BadRequest)?,
                 },

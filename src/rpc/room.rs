@@ -4,7 +4,7 @@ use diesel::prelude::*;
 use errors::Result;
 use models;
 use rpc;
-use schema::rooms;
+use schema::room;
 
 use messages::room::{CreateRequest, CreateResponse, DeleteRequest, DeleteResponse, ListResponse,
                      ReadRequest, ReadResponse, UpdateRequest, UpdateResponse};
@@ -38,7 +38,7 @@ impl Rpc for RpcImpl {
     fn create(&self, meta: rpc::Meta, req: CreateRequest) -> Result<CreateResponse> {
         let conn = establish_connection!(meta.db_pool.unwrap());
 
-        let room: models::Room = diesel::insert_into(rooms::table)
+        let room: models::Room = diesel::insert_into(room::table)
             .values(&req.data)
             .get_result(conn)?;
 
@@ -48,7 +48,7 @@ impl Rpc for RpcImpl {
     fn read(&self, meta: rpc::Meta, req: ReadRequest) -> Result<ReadResponse> {
         let conn = establish_connection!(meta.db_pool.unwrap());
 
-        let room: models::Room = rooms::table.find(req.room_id).first(conn)?;
+        let room: models::Room = room::table.find(req.room_id).first(conn)?;
 
         Ok(ReadResponse::new(&room))
     }
@@ -56,7 +56,7 @@ impl Rpc for RpcImpl {
     fn update(&self, meta: rpc::Meta, req: UpdateRequest) -> Result<UpdateResponse> {
         let conn = establish_connection!(meta.db_pool.unwrap());
 
-        let room = rooms::table.find(req.room_id);
+        let room = room::table.find(req.room_id);
         let room: models::Room = diesel::update(room).set(&req.data).get_result(conn)?;
 
         Ok(UpdateResponse::new(&room))
@@ -65,7 +65,7 @@ impl Rpc for RpcImpl {
     fn delete(&self, meta: rpc::Meta, req: DeleteRequest) -> Result<DeleteResponse> {
         let conn = establish_connection!(meta.db_pool.unwrap());
 
-        let room = rooms::table.find(req.room_id);
+        let room = room::table.find(req.room_id);
         let room: models::Room = diesel::delete(room).get_result(conn)?;
 
         Ok(DeleteResponse::new(&room))
@@ -74,7 +74,7 @@ impl Rpc for RpcImpl {
     fn list(&self, meta: rpc::Meta) -> Result<ListResponse> {
         let conn = establish_connection!(meta.db_pool.unwrap());
 
-        let rooms = rooms::table.load::<models::Room>(conn)?;
+        let rooms = room::table.load::<models::Room>(conn)?;
 
         Ok(ListResponse::new(&rooms))
     }
