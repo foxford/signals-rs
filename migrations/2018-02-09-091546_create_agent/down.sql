@@ -1,1 +1,1 @@
-DROP TABLE agent;
+drop table agent;

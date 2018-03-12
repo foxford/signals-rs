@@ -1,7 +1,8 @@
-CREATE TABLE agent (
-  id uuid PRIMARY KEY NOT NULL,
-  label TEXT NOT NULL,
-  room_id uuid NOT NULL,
+create table agent (
+  id uuid not null,
+  label text not null,
+  room_id uuid not null,
 
-  FOREIGN KEY (room_id) REFERENCES room (id) ON DELETE CASCADE
+  primary key (id),
+  foreign key (room_id) references room (id) on delete cascade
 );

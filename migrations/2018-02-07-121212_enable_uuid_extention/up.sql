@@ -1,1 +1,1 @@
-CREATE EXTENSION "uuid-ossp";
+create extension "uuid-ossp";

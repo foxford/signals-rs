@@ -1,1 +1,1 @@
-DROP TABLE room;
+drop table room;

@@ -1,4 +1,6 @@
-CREATE TABLE room (
-  id uuid PRIMARY KEY NOT NULL DEFAULT uuid_generate_v4(),
-  label TEXT NOT NULL
+create table room (
+  id uuid not null default uuid_generate_v4(),
+  label text not null,
+
+  primary key (id)
 );
