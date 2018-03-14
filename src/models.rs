@@ -1,9 +1,11 @@
+use chrono::NaiveDateTime;
 use schema::{agent, local_track, remote_track};
 use uuid::Uuid;
 
 #[derive(Queryable, Debug)]
 pub struct Room {
     pub id: Uuid,
+    pub created_at: NaiveDateTime,
 }
 
 #[derive(Associations, Identifiable, Queryable, Debug)]

@@ -29,6 +29,7 @@ table! {
 table! {
     room (id) {
         id -> Uuid,
+        created_at -> Timestamp,
     }
 }
 
