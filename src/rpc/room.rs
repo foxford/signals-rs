@@ -6,21 +6,18 @@ use models;
 use rpc;
 use schema::room;
 
-use messages::room::{CreateRequest, CreateResponse, DeleteRequest, DeleteResponse, ListResponse,
-                     ReadRequest, ReadResponse, UpdateRequest, UpdateResponse};
+use messages::room::{CreateResponse, DeleteRequest, DeleteResponse, ListResponse, ReadRequest,
+                     ReadResponse};
 
 build_rpc_trait! {
     pub trait Rpc {
         type Metadata;
 
         #[rpc(meta, name = "room.create")]
-        fn create(&self, Self::Metadata, CreateRequest) -> Result<CreateResponse>;
+        fn create(&self, Self::Metadata) -> Result<CreateResponse>;
 
         #[rpc(meta, name = "room.read")]
         fn read(&self, Self::Metadata, ReadRequest) -> Result<ReadResponse>;
-
-        #[rpc(meta, name = "room.update")]
-        fn update(&self, Self::Metadata, UpdateRequest) -> Result<UpdateResponse>;
 
         #[rpc(meta, name = "room.delete")]
         fn delete(&self, Self::Metadata, DeleteRequest) -> Result<DeleteResponse>;
@@ -35,11 +32,11 @@ pub struct RpcImpl;
 impl Rpc for RpcImpl {
     type Metadata = rpc::Meta;
 
-    fn create(&self, meta: rpc::Meta, req: CreateRequest) -> Result<CreateResponse> {
+    fn create(&self, meta: rpc::Meta) -> Result<CreateResponse> {
         let conn = establish_connection!(meta.db_pool.unwrap());
 
         let room: models::Room = diesel::insert_into(room::table)
-            .values(&req.data)
+            .default_values()
             .get_result(conn)?;
 
         Ok(CreateResponse::new(&room))
@@ -51,15 +48,6 @@ impl Rpc for RpcImpl {
         let room: models::Room = room::table.find(req.room_id).first(conn)?;
 
         Ok(ReadResponse::new(&room))
-    }
-
-    fn update(&self, meta: rpc::Meta, req: UpdateRequest) -> Result<UpdateResponse> {
-        let conn = establish_connection!(meta.db_pool.unwrap());
-
-        let room = room::table.find(req.room_id);
-        let room: models::Room = diesel::update(room).set(&req.data).get_result(conn)?;
-
-        Ok(UpdateResponse::new(&room))
     }
 
     fn delete(&self, meta: rpc::Meta, req: DeleteRequest) -> Result<DeleteResponse> {

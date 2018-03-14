@@ -1,17 +1,9 @@
-use schema::{agent, local_track, remote_track, room};
+use schema::{agent, local_track, remote_track};
 use uuid::Uuid;
 
-#[derive(Identifiable, Queryable, Debug)]
-#[table_name = "room"]
+#[derive(Queryable, Debug)]
 pub struct Room {
     pub id: Uuid,
-    pub label: String,
-}
-
-#[derive(AsChangeset, Insertable, Debug, PartialEq, Serialize, Deserialize)]
-#[table_name = "room"]
-pub struct NewRoom {
-    pub label: String,
 }
 
 #[derive(Associations, Identifiable, Queryable, Debug)]

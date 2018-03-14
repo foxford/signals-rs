@@ -50,11 +50,7 @@ MSG=`cat <<EOF
 {
     "jsonrpc": "2.0",
     "method": "room.create",
-    "params": [{
-        "data": {
-            "label": "$1"
-        }
-    }],
+    "params": [],
     "id": "qwerty"
 }
 EOF

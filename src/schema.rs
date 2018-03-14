@@ -29,7 +29,6 @@ table! {
 table! {
     room (id) {
         id -> Uuid,
-        label -> Text,
     }
 }
 
