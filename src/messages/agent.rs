@@ -1,30 +1,35 @@
-use models;
+use chrono::NaiveDateTime;
 use uuid::Uuid;
 
 use messages::{Event, EventKind};
 use messages::query_parameters::QueryParameters;
+use models;
 
 // Create
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Deserialize)]
 pub struct CreateRequest {
     pub room_id: Uuid,
     pub id: Uuid,
     pub data: CreateRequestData,
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Deserialize)]
 pub struct CreateRequestData {
     pub label: String,
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize)]
 pub struct CreateResponse {
     id: Uuid,
     data: CreateResponseData,
 }
 
-type CreateResponseData = CreateRequestData;
+#[derive(Clone, Debug, Serialize)]
+struct CreateResponseData {
+    label: String,
+    created_at: NaiveDateTime,
+}
 
 impl CreateResponse {
     pub fn new(agent: &models::Agent) -> CreateResponse {
@@ -32,6 +37,7 @@ impl CreateResponse {
             id: agent.id,
             data: CreateResponseData {
                 label: agent.label.clone(),
+                created_at: agent.created_at,
             },
         }
     }
@@ -49,7 +55,7 @@ impl From<CreateEvent> for EventKind {
 
 // Read
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Deserialize)]
 pub struct ReadRequest {
     pub room_id: Uuid,
     pub id: Uuid,
@@ -85,6 +91,7 @@ impl DeleteResponse {
             id: agent.id,
             data: DeleteResponseData {
                 label: agent.label.clone(),
+                created_at: agent.created_at,
             },
         }
     }
@@ -104,7 +111,7 @@ impl From<DeleteEvent> for EventKind {
 
 pub type ListRequest = QueryParameters;
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize)]
 pub struct ListResponse(Vec<ListResponseData>);
 
 impl ListResponse {
@@ -115,6 +122,7 @@ impl ListResponse {
                 id: agent.id,
                 data: ReadResponseData {
                     label: agent.label.clone(),
+                    created_at: agent.created_at,
                 },
             })
             .collect();

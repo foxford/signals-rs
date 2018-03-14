@@ -29,7 +29,8 @@ agents/A(a)u1/in/signals.netology-group.services/api/v1
     "result": {
         "id": "1154b35c-e5b0-4a42-8ab2-d4967ce38c9e",
         "data": {
-            "label": "John Doe II"
+            "label": "John Doe II",
+            "created_at": "2018-03-14T08:03:33.923744"
         }
     },
     "id": "qwerty"

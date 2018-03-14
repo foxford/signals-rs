@@ -3,6 +3,7 @@ table! {
         id -> Uuid,
         label -> Text,
         room_id -> Uuid,
+        created_at -> Timestamp,
     }
 }
 

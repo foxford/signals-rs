@@ -23,7 +23,8 @@ apps/signals.netology-group.services/api/v1/rooms/050b7c6f-795c-4cb4-aeea-5ee3f9
         "payload": {
             "id": "1154b35c-e5b0-4a42-8ab2-d4967ce38c9e",
             "data": {
-                "label": "John Doe"
+                "label": "John Doe",
+                "created_at": "2018-03-14T08:03:33.923744"
             }
         }
     }]
@@ -40,7 +41,8 @@ apps/signals.netology-group.services/api/v1/rooms/050b7c6f-795c-4cb4-aeea-5ee3f9
         "payload": {
             "id": "1154b35c-e5b0-4a42-8ab2-d4967ce38c9e",
             "data": {
-                "label": "John Doe"
+                "label": "John Doe",
+                "created_at": "2018-03-14T08:03:33.923744"
             }
         }
     }]

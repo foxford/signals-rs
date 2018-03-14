@@ -27,13 +27,15 @@ agents/A(a)u1/in/signals.netology-group.services/api/v1
         {
             "id": "1154b35c-e5b0-4a42-8ab2-d4967ce38c9e",
             "data": {
-                "label": "John Doe"
+                "label": "John Doe",
+                "created_at": "2018-03-14T08:03:33.923744"
             }
         },
         {
             "id": "ad0dbebd-a685-48a1-85e3-d01cda9d98e4",
             "data": {
-                "label": "Johnny Appleseed"
+                "label": "Johnny Appleseed",
+                "created_at": "2018-03-14T08:04:44.923744"
             }
         }
     ],
