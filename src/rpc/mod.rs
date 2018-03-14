@@ -1,8 +1,9 @@
 use jsonrpc_core::{MetaIoHandler, Metadata};
+
 use std::sync::mpsc::Sender;
 
 use DbPool;
-use messages::{EnvelopeSubject, EventKind};
+use messages::{EnvelopeSubject, Notification};
 use rpc::agent::Rpc as AgentRpc;
 use rpc::ping::Rpc as PingRpc;
 use rpc::room::Rpc as RoomRpc;
@@ -21,7 +22,7 @@ mod webrtc;
 #[derive(Clone, Default)]
 pub struct Meta {
     pub subject: EnvelopeSubject,
-    pub event_tx: Option<Sender<EventKind>>,
+    pub notification_tx: Option<Sender<Notification>>,
     pub db_pool: Option<DbPool>,
 }
 

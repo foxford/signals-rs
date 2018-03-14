@@ -1,4 +1,4 @@
-use jsonrpc_core::{Notification, Params, Version};
+use jsonrpc_core::{self, Params, Version};
 use serde::ser::Serialize;
 use serde_json;
 use std::ops::Deref;
@@ -34,6 +34,21 @@ impl Deref for EnvelopeMessage {
     }
 }
 
+#[derive(Debug)]
+pub enum Notification {
+    Event(EventKind),
+    Method(Method),
+}
+
+impl From<Notification> for jsonrpc_core::Notification {
+    fn from(notification: Notification) -> Self {
+        match notification {
+            Notification::Event(e) => e.into(),
+            Notification::Method(m) => m.body,
+        }
+    }
+}
+
 #[derive(Debug, Serialize)]
 #[serde(tag = "type")]
 pub enum EventKind {
@@ -50,11 +65,21 @@ pub enum EventKind {
 }
 
 impl From<EventKind> for Notification {
+    fn from(kind: EventKind) -> Self {
+        Notification::Event(kind)
+    }
+}
+
+impl From<EventKind> for jsonrpc_core::Notification {
     fn from(event: EventKind) -> Self {
-        Notification {
+        let params = serde_json::to_value(event)
+            .ok()
+            .map(|value| Params::Array(vec![value]));
+
+        jsonrpc_core::Notification {
             jsonrpc: Some(Version::V2),
             method: "event".to_string(),
-            params: Some(Params::Array(vec![serde_json::to_value(event).unwrap()])),
+            params,
         }
     }
 }
@@ -69,6 +94,18 @@ pub struct Event<T: Serialize> {
 impl<T: Serialize> Event<T> {
     pub fn new(room_id: Uuid, payload: T) -> Event<T> {
         Event { room_id, payload }
+    }
+}
+
+#[derive(Debug)]
+pub struct Method {
+    pub agent_id: Uuid,
+    pub body: jsonrpc_core::Notification,
+}
+
+impl From<Method> for Notification {
+    fn from(method: Method) -> Self {
+        Notification::Method(method)
     }
 }
 

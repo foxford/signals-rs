@@ -1,5 +1,6 @@
 use errors::Result;
-use messages::webrtc::{OfferRequest};
+use messages::Method;
+use messages::webrtc::{AnswerRequest, CandidateRequest, OfferRequest};
 use rpc;
 
 build_rpc_trait! {
@@ -7,13 +8,13 @@ build_rpc_trait! {
         type Metadata;
 
         #[rpc(meta, name = "webrtc.offer")]
-        fn offer(&self, Self::Metadata, OfferRequest) -> Result<()>;
+        fn offer(&self, Self::Metadata, OfferRequest) -> Result<Vec<()>>;
 
-        // #[rpc(meta, name = "webrtc.answer")]
-        // fn answer(&self, Self::Metadata, ReadRequest) -> Result<()>;
+        #[rpc(meta, name = "webrtc.answer")]
+        fn answer(&self, Self::Metadata, AnswerRequest) -> Result<Vec<()>>;
 
-        // #[rpc(meta, name = "webrtc.candidate")]
-        // fn candidate(&self, Self::Metadata, DeleteRequest) -> Result<()>;
+        #[rpc(meta, name = "webrtc.candidate")]
+        fn candidate(&self, Self::Metadata, CandidateRequest) -> Result<Vec<()>>;
     }
 }
 
@@ -22,13 +23,27 @@ pub struct RpcImpl;
 impl Rpc for RpcImpl {
     type Metadata = rpc::Meta;
 
-    fn offer(&self, meta: rpc::Meta, req: OfferRequest) -> Result<()> {
-        let conn = establish_connection!(meta.db_pool.unwrap());
+    fn offer(&self, meta: rpc::Meta, req: OfferRequest) -> Result<Vec<()>> {
+        let method = Method::from(req);
+        let notification_tx = meta.notification_tx.unwrap();
+        notification_tx.send(method.into()).unwrap();
 
-        let room: models::Room = diesel::insert_into(room::table)
-            .default_values()
-            .get_result(conn)?;
+        Ok(vec![])
+    }
 
-        Ok(())
+    fn answer(&self, meta: rpc::Meta, req: AnswerRequest) -> Result<Vec<()>> {
+        let method = Method::from(req);
+        let notification_tx = meta.notification_tx.unwrap();
+        notification_tx.send(method.into()).unwrap();
+
+        Ok(vec![])
+    }
+
+    fn candidate(&self, meta: rpc::Meta, req: CandidateRequest) -> Result<Vec<()>> {
+        let method = Method::from(req);
+        let notification_tx = meta.notification_tx.unwrap();
+        notification_tx.send(method.into()).unwrap();
+
+        Ok(vec![])
     }
 }

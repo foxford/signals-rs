@@ -8,6 +8,7 @@ use models;
 use rpc;
 use schema::{agent, local_track, remote_track, room};
 
+use messages::EventKind;
 use messages::query_parameters as query;
 use messages::track::{CreateEvent, CreateRequest, CreateResponse, DeleteEvent, DeleteRequest,
                       DeleteResponse, ListRequest, ListResponse, RegisterRequest,
@@ -77,8 +78,9 @@ impl Rpc for RpcImpl {
         let resp = CreateResponse::new(&track, &[]);
 
         let event = CreateEvent::new(room.id, resp.clone());
-        let event_tx = meta.event_tx.unwrap();
-        event_tx.send(event.into()).unwrap();
+        let notification_tx = meta.notification_tx.unwrap();
+        let event_kind = EventKind::from(event);
+        notification_tx.send(event_kind.into()).unwrap();
 
         Ok(resp)
     }
@@ -97,8 +99,9 @@ impl Rpc for RpcImpl {
         let resp = DeleteResponse::new(&track, &[]);
 
         let event = DeleteEvent::new(req.room_id, resp.clone());
-        let event_tx = meta.event_tx.unwrap();
-        event_tx.send(event.into()).unwrap();
+        let notification_tx = meta.notification_tx.unwrap();
+        let event_kind = EventKind::from(event);
+        notification_tx.send(event_kind.into()).unwrap();
 
         Ok(resp)
     }
@@ -124,8 +127,9 @@ impl Rpc for RpcImpl {
         let resp = RegisterResponse::new(&track, &remote_tracks);
 
         let event = UpdateEvent::new(req.room_id, resp.clone());
-        let event_tx = meta.event_tx.unwrap();
-        event_tx.send(event.into()).unwrap();
+        let notification_tx = meta.notification_tx.unwrap();
+        let event_kind = EventKind::from(event);
+        notification_tx.send(event_kind.into()).unwrap();
 
         Ok(resp)
     }
@@ -149,8 +153,9 @@ impl Rpc for RpcImpl {
         let resp = UnregisterResponse::new(&track, &remote_tracks);
 
         let event = UpdateEvent::new(req.room_id, resp.clone());
-        let event_tx = meta.event_tx.unwrap();
-        event_tx.send(event.into()).unwrap();
+        let notification_tx = meta.notification_tx.unwrap();
+        let event_kind = EventKind::from(event);
+        notification_tx.send(event_kind.into()).unwrap();
 
         Ok(resp)
     }

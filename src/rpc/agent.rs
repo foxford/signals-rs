@@ -9,6 +9,7 @@ use rpc;
 use schema::{agent, local_track, room};
 
 use messages::{query_parameters, track};
+use messages::EventKind;
 use messages::agent::{CreateEvent, CreateRequest, CreateResponse, DeleteEvent, DeleteRequest,
                       DeleteResponse, ListRequest, ListResponse, ReadRequest, ReadResponse,
                       UpdateRequest, UpdateResponse};
@@ -57,8 +58,9 @@ impl Rpc for RpcImpl {
         let resp = CreateResponse::new(&agent);
 
         let event = CreateEvent::new(room.id, resp.clone());
-        let event_tx = meta.event_tx.unwrap();
-        event_tx.send(event.into()).unwrap();
+        let notification_tx = meta.notification_tx.unwrap();
+        let event_kind = EventKind::from(event);
+        notification_tx.send(event_kind.into()).unwrap();
 
         Ok(resp)
     }
@@ -106,17 +108,19 @@ impl Rpc for RpcImpl {
             Ok((agent, tracks))
         })?;
 
-        let event_tx = meta.event_tx.unwrap();
+        let notification_tx = meta.notification_tx.unwrap();
 
         for track in &tracks {
             let resp = track::DeleteResponse::new(track, &[]);
             let event = track::DeleteEvent::new(req.room_id, resp);
-            event_tx.send(event.into()).unwrap();
+            let event_kind = EventKind::from(event);
+            notification_tx.send(event_kind.into()).unwrap();
         }
 
         let resp = DeleteResponse::new(&agent);
         let event = DeleteEvent::new(req.room_id, resp.clone());
-        event_tx.send(event.into()).unwrap();
+        let event_kind = EventKind::from(event);
+        notification_tx.send(event_kind.into()).unwrap();
 
         Ok(resp)
     }

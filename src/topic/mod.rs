@@ -8,7 +8,8 @@ mod agent;
 mod app;
 mod ping;
 
-use topic::agent::{topic as agent_topic, AgentTopic};
+pub use topic::agent::AgentTopic;
+use topic::agent::topic as agent_topic;
 pub use topic::app::{AppTopic, ResourceKind};
 use topic::ping::{topic as ping_topic, PingTopicKind};
 
