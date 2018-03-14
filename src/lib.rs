@@ -19,7 +19,7 @@ extern crate uuid;
 
 use diesel::{PgConnection, r2d2};
 use rumqtt::{Message as MqttMessage, MqttCallback, MqttClient, MqttOptions, QoS};
-use std::sync::{mpsc, Arc, Mutex};
+use std::sync::{mpsc, Mutex};
 use std::{env, process, thread};
 
 use errors::*;
@@ -43,6 +43,8 @@ pub mod schema;
 
 type DbPool = r2d2::Pool<r2d2::ConnectionManager<PgConnection>>;
 
+static mut MQTT_CLIENT: Option<Mutex<MqttClient>> = None;
+
 pub fn run(mqtt_options: MqttOptions) {
     let (tx, rx) = mpsc::channel::<MqttMessage>();
     let tx = Mutex::new(tx);
@@ -64,11 +66,13 @@ pub fn run(mqtt_options: MqttOptions) {
         process::exit(1);
     });
 
-    let client = Arc::new(Mutex::new(client));
+    unsafe {
+        MQTT_CLIENT = Some(Mutex::new(client));
+    }
+
     let mut handles = vec![];
 
     let handle = thread::spawn({
-        let client = Arc::clone(&client);
         move || {
             let database_url = env::var("DATABASE_URL").unwrap();
             let manager = r2d2::ConnectionManager::<PgConnection>::new(database_url);
@@ -81,11 +85,8 @@ pub fn run(mqtt_options: MqttOptions) {
             for msg in rx.iter() {
                 let notification_tx = notification_tx.clone();
                 let pool = pool.clone();
-                let mut client = client.lock().unwrap();
 
-                if let Err(ref e) =
-                    handle_message(&server, &mut client, &msg, notification_tx, pool)
-                {
+                if let Err(ref e) = handle_message(&server, &msg, notification_tx, pool) {
                     use std::io::Write;
                     let stderr = &mut ::std::io::stderr();
                     let errmsg = "Error writing to stderr";
@@ -98,7 +99,6 @@ pub fn run(mqtt_options: MqttOptions) {
     handles.push(handle);
 
     let handle = thread::spawn({
-        let client = Arc::clone(&client);
         move || {
             for notification in notification_rx.iter() {
                 let topic = match notification {
@@ -130,10 +130,14 @@ pub fn run(mqtt_options: MqttOptions) {
                 let payload = serde_json::to_string(&note).unwrap();
                 println!("EVENT: {}", payload);
 
-                let mut client = client.lock().unwrap();
-                client
-                    .publish(&topic.to_string(), QoS::Level1, payload.into_bytes())
-                    .unwrap();
+                unsafe {
+                    if let Some(ref client) = MQTT_CLIENT {
+                        let mut client = client.lock().unwrap();
+                        client
+                            .publish(&topic.to_string(), QoS::Level1, payload.into_bytes())
+                            .unwrap();
+                    }
+                }
             }
         }
     });
@@ -160,7 +164,6 @@ fn subscribe(client: &mut MqttClient) -> Result<()> {
 
 fn handle_message(
     server: &rpc::Server,
-    mqtt_client: &mut MqttClient,
     mqtt_msg: &MqttMessage,
     notification_tx: ::std::sync::mpsc::Sender<Notification>,
     pool: DbPool,
@@ -185,7 +188,12 @@ fn handle_message(
     let resp = server.handle_request_sync(&request, meta).unwrap();
 
     if let Some(topic) = topic.get_reverse() {
-        mqtt_client.publish(&topic.to_string(), QoS::Level1, resp.into_bytes())?;
+        unsafe {
+            if let Some(ref client) = MQTT_CLIENT {
+                let mut client = client.lock().unwrap();
+                client.publish(&topic.to_string(), QoS::Level1, resp.into_bytes())?;
+            }
+        }
     }
 
     Ok(())
