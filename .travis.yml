@@ -29,17 +29,17 @@ matrix:
         - cargo install mdbook || true
       after_success:
         - |
-          if [ ! -d "$HOME/google-cloud-sdk/bin" ]; then rm -rf $HOME/google-cloud-sdk; curl https://sdk.cloud.google.com | bash; fi
-          $HOME/google-cloud-sdk/install.sh -q
-          source $HOME/google-cloud-sdk/path.bash.inc
-          openssl aes-256-cbc -K $encrypted_337e78d77263_key -iv $encrypted_337e78d77263_iv -in .travis-key.json.enc -out .travis-key.json -d
-          gcloud auth activate-service-account --key-file .travis-key.json
-          rm -f .travis-key.json
-          mdbook build docs/ --dest-dir site/book/
-          cargo doc --no-deps
-          mv target/doc docs/site/rustdoc
-          gsutil -m rm -rf gs://signals-rs.docs.netology-group.services/*
-          gsutil -m mv -ra public-read docs/site/* gs://signals-rs.docs.netology-group.services
+          if [ ! -d "$HOME/google-cloud-sdk/bin" ]; then rm -rf $HOME/google-cloud-sdk; curl https://sdk.cloud.google.com | bash; fi &&
+          $HOME/google-cloud-sdk/install.sh -q &&
+          source $HOME/google-cloud-sdk/path.bash.inc &&
+          openssl aes-256-cbc -K $encrypted_337e78d77263_key -iv $encrypted_337e78d77263_iv -in .travis-key.json.enc -out .travis-key.json -d &&
+          gcloud auth activate-service-account --key-file .travis-key.json &&
+          rm -f .travis-key.json &&
+          mdbook build docs/ --dest-dir site/book/ &&
+          cargo doc --no-deps &&
+          mv target/doc docs/site/rustdoc &&
+          gsutil -m rm -rf gs://signals-rs.docs.netology-group.services/* &&
+          gsutil -m mv -ra public-read docs/site/* gs://signals-rs.docs.netology-group.services &&
           rm -rf docs/site/book docs/site/rustdoc
   script:
     - cargo build
