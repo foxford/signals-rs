@@ -8,12 +8,14 @@ use rpc::ping::Rpc as PingRpc;
 use rpc::room::Rpc as RoomRpc;
 use rpc::subscription::Rpc as SubscriptionRpc;
 use rpc::track::Rpc as TrackRpc;
+use rpc::webrtc::Rpc as WebrtcRpc;
 
 mod ping;
 mod agent;
 mod room;
 mod subscription;
 mod track;
+mod webrtc;
 
 // TODO: remove Default on new jsonrpc_core version
 #[derive(Clone, Default)]
@@ -43,6 +45,9 @@ pub fn build_server() -> Server {
     io.extend_with(rpc.to_delegate());
 
     let rpc = track::RpcImpl {};
+    io.extend_with(rpc.to_delegate());
+
+    let rpc = webrtc::RpcImpl {};
     io.extend_with(rpc.to_delegate());
 
     io
