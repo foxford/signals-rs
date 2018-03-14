@@ -108,8 +108,8 @@ impl Rpc for RpcImpl {
 
         let event_tx = meta.event_tx.unwrap();
 
-        for track in tracks.iter() {
-            let resp = track::DeleteResponse::new(track, &vec![]);
+        for track in &tracks {
+            let resp = track::DeleteResponse::new(track, &[]);
             let event = track::DeleteEvent::new(req.room_id, resp);
             event_tx.send(event.into()).unwrap();
         }

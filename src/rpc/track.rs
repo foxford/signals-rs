@@ -74,7 +74,7 @@ impl Rpc for RpcImpl {
             .values(&changeset)
             .get_result(conn)?;
 
-        let resp = CreateResponse::new(&track, &vec![]);
+        let resp = CreateResponse::new(&track, &[]);
 
         let event = CreateEvent::new(room.id, resp.clone());
         let event_tx = meta.event_tx.unwrap();
@@ -94,7 +94,7 @@ impl Rpc for RpcImpl {
             .first(conn)?;
 
         let track = diesel::delete(&track).get_result(conn)?;
-        let resp = DeleteResponse::new(&track, &vec![]);
+        let resp = DeleteResponse::new(&track, &[]);
 
         let event = DeleteEvent::new(req.room_id, resp.clone());
         let event_tx = meta.event_tx.unwrap();
