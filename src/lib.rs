@@ -37,6 +37,7 @@ pub mod errors;
 pub mod messages;
 pub mod rpc;
 pub mod topic;
+pub mod version;
 
 pub mod schema;
 pub mod models;

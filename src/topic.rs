@@ -1,11 +1,12 @@
-use nom::alphanumeric;
 use nom::types::CompleteStr;
 use serde::{Serialize, Serializer};
-use std::fmt;
-use std::str::FromStr;
 use uuid::Uuid;
 
+use std::fmt;
+use std::str::FromStr;
+
 use errors::*;
+use version::Version;
 
 named!(ping_topic<CompleteStr, Topic>,
     alt!(
@@ -21,7 +22,7 @@ named!(agent_topic<CompleteStr, Topic>,
         tag_s!("/") >>
         kind: alt!(map!(tag_s!("in"), |_| AgentTopicKind::In) | map!(tag_s!("out"), |_| AgentTopicKind::Out)) >>
         tag_s!("/signals.netology-group.services/api/") >>
-        version: map_res!(alphanumeric, |s: CompleteStr| FromStr::from_str(s.0)) >>
+        version: map!(tag_s!("v1"), |_| Version::V1) >>
         opt!(tag_s!("/")) >>
         eof!() >>
 
@@ -84,22 +85,7 @@ impl fmt::Display for PingTopicKind {
 pub struct AgentTopic {
     kind: AgentTopicKind,
     agent_id: Uuid,
-    version: String,
-}
-
-impl AgentTopic {
-    pub fn get_reverse(&self) -> AgentTopic {
-        let kind = match self.kind {
-            AgentTopicKind::In => AgentTopicKind::Out,
-            AgentTopicKind::Out => AgentTopicKind::In,
-        };
-
-        AgentTopic {
-            kind,
-            agent_id: self.agent_id,
-            version: self.version.clone(),
-        }
-    }
+    version: Version,
 }
 
 impl fmt::Display for AgentTopic {
@@ -193,7 +179,7 @@ impl Reversible for AgentTopic {
         AgentTopic {
             kind,
             agent_id: self.agent_id,
-            version: self.version.clone(),
+            version: self.version,
         }
     }
 }
@@ -211,7 +197,7 @@ mod tests {
         let topic_exp = Topic::Agent(AgentTopic {
             kind: AgentTopicKind::Out,
             agent_id: Uuid::parse_str("e19c94cf-53eb-4048-9c94-7ae74ff6d912").unwrap(),
-            version: "v1".to_string(),
+            version: Version::V1,
         });
         assert_eq!(topic, Ok((CompleteStr(""), topic_exp)));
 
@@ -219,7 +205,7 @@ mod tests {
         let topic_exp = Topic::Agent(AgentTopic {
             kind: AgentTopicKind::Out,
             agent_id: Uuid::parse_str("e19c94cf-53eb-4048-9c94-7ae74ff6d912").unwrap(),
-            version: "v1".to_string(),
+            version: Version::V1,
         });
         assert_eq!(topic, Ok((CompleteStr(""), topic_exp)));
     }
@@ -271,7 +257,7 @@ mod tests {
                 t.agent_id,
                 Uuid::parse_str("e19c94cf-53eb-4048-9c94-7ae74ff6d912").unwrap()
             );
-            assert_eq!(t.version, "v1");
+            assert_eq!(t.version, Version::V1);
         } else {
             assert!(false);
         }
@@ -301,13 +287,13 @@ mod tests {
         let out_topic = AgentTopic {
             kind: AgentTopicKind::Out,
             agent_id: Uuid::parse_str("e19c94cf-53eb-4048-9c94-7ae74ff6d912").unwrap(),
-            version: "v1".to_string(),
+            version: Version::V1,
         };
 
         let expected = AgentTopic {
             kind: AgentTopicKind::In,
             agent_id: Uuid::parse_str("e19c94cf-53eb-4048-9c94-7ae74ff6d912").unwrap(),
-            version: "v1".to_string(),
+            version: Version::V1,
         };
 
         assert_eq!(out_topic.get_reverse(), expected);
@@ -327,7 +313,7 @@ mod tests {
         let topic = Topic::Agent(AgentTopic {
             kind: AgentTopicKind::Out,
             agent_id: Uuid::parse_str("e19c94cf-53eb-4048-9c94-7ae74ff6d912").unwrap(),
-            version: "v1".to_string(),
+            version: Version::V1,
         });
         let expected = "agents/e19c94cf-53eb-4048-9c94-7ae74ff6d912/out/signals.netology-group.services/api/v1";
         assert_eq!(topic.to_string(), expected);
