@@ -29,11 +29,11 @@ impl Topic {
         Ok(t)
     }
 
-    pub fn get_reverse(&self) -> Topic {
+    pub fn get_reverse(&self) -> Option<Topic> {
         match *self {
-            Topic::Ping(ref t) => Topic::Ping(t.get_reverse()),
-            Topic::Agent(ref t) => Topic::Agent(t.get_reverse()),
-            Topic::App(_) => unreachable!(),
+            Topic::Ping(ref t) => Some(Topic::Ping(t.get_reverse())),
+            Topic::Agent(ref t) => Some(Topic::Agent(t.get_reverse())),
+            Topic::App(_) => None,
         }
     }
 }

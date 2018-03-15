@@ -180,8 +180,10 @@ fn handle_message(
     };
 
     let resp = server.handle_request_sync(&request, meta).unwrap();
-    let resp_topic = topic.get_reverse();
-    mqtt_client.publish(&resp_topic.to_string(), QoS::Level1, resp.into_bytes())?;
+
+    if let Some(topic) = topic.get_reverse() {
+        mqtt_client.publish(&topic.to_string(), QoS::Level1, resp.into_bytes())?;
+    }
 
     Ok(())
 }
