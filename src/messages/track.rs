@@ -18,7 +18,7 @@ pub struct CreateRequestData {
     pub metadata: Value,
 }
 
-#[derive(Clone, Debug, Serialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct CreateResponse {
     id: Uuid,
     data: CreateResponseData,
@@ -61,7 +61,7 @@ pub struct DeleteRequest {
     pub id: Uuid,
 }
 
-#[derive(Clone, Debug, Serialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct DeleteResponse {
     id: Uuid,
     data: DeleteResponseData,

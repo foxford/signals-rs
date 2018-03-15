@@ -139,7 +139,7 @@ impl JoinResponse {
     }
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct JoinEventPayload {
     agent_id: Uuid,
     room_id: Uuid,
@@ -169,13 +169,13 @@ pub struct LeaveRequest {
     pub id: Uuid,
 }
 
-#[derive(Clone, Debug, Serialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct LeaveResponse {
     id: Uuid,
     data: LeaveResponseData,
 }
 
-#[derive(Clone, Debug, Serialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 struct LeaveResponseData {
     label: String,
     created_at: NaiveDateTime,

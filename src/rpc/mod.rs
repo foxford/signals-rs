@@ -13,6 +13,7 @@ use rpc::webrtc::Rpc as WebrtcRpc;
 
 mod agent;
 mod error;
+mod event;
 mod ping;
 mod room;
 mod subscription;
@@ -51,6 +52,8 @@ pub fn build_server() -> Server {
 
     let rpc = webrtc::RpcImpl {};
     io.extend_with(rpc.to_delegate());
+
+    io.add_notification_with_meta("event", event::call);
 
     io
 }

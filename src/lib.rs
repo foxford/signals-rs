@@ -115,6 +115,7 @@ pub fn try_run(options: Options) -> Result<(), failure::Error> {
                                 room_id: event.room_id,
                                 resource: ResourceKind::Tracks,
                             },
+                            EventKind::StateUpdate(_) => unreachable!(),
                         };
                         Topic::App(app_topic)
                     }
@@ -148,6 +149,7 @@ fn subscribe(client: &mut MqttClient) -> Result<(), failure::Error> {
             "agents/+/out/signals.netology-group.services/api/v1",
             QoS::Level1,
         ),
+        ("agents/+/state/api/v1", QoS::Level1),
     ];
 
     client.subscribe(topics)?;
@@ -179,10 +181,10 @@ fn handle_message(
         db_pool: Some(pool),
     };
 
-    let resp = server.handle_request_sync(&request, meta).unwrap();
-
-    if let Some(topic) = topic.get_reverse() {
-        mqtt_client.publish(&topic.to_string(), QoS::Level1, resp.into_bytes())?;
+    if let Some(resp) = server.handle_request_sync(&request, meta) {
+        if let Some(topic) = topic.get_reverse() {
+            mqtt_client.publish(&topic.to_string(), QoS::Level1, resp.into_bytes())?;
+        }
     }
 
     Ok(())

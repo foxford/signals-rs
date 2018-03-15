@@ -7,6 +7,7 @@ use uuid::Uuid;
 pub mod agent;
 pub mod query_parameters;
 pub mod room;
+pub mod state;
 pub mod subscription;
 pub mod track;
 pub mod webrtc;
@@ -49,7 +50,7 @@ impl From<Notification> for jsonrpc_core::Notification {
     }
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Deserialize)]
 #[serde(tag = "type")]
 pub enum EventKind {
     #[serde(rename = "agent.join_room")]
@@ -60,6 +61,8 @@ pub enum EventKind {
     TrackCreate(track::CreateEvent),
     #[serde(rename = "track.delete")]
     TrackDelete(track::DeleteEvent),
+    #[serde(rename = "state.update")]
+    StateUpdate(state::UpdateEvent),
 }
 
 impl From<EventKind> for Notification {
@@ -82,7 +85,7 @@ impl From<EventKind> for jsonrpc_core::Notification {
     }
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct Event<T: Serialize> {
     #[serde(skip_serializing)]
     pub room_id: Uuid,
