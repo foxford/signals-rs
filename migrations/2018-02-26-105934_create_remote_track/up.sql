@@ -1,5 +1,5 @@
 create table remote_track (
-  id uuid not null default uuid_generate_v4(),
+  id uuid default uuid_generate_v4(),
   local_track_id uuid not null,
   agent_id uuid not null,
 

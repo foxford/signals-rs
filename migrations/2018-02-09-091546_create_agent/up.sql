@@ -1,5 +1,5 @@
 create table agent (
-  id uuid not null,
+  id uuid,
   label text not null,
   room_id uuid not null,
   created_at timestamp not null default now(),

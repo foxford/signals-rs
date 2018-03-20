@@ -1,5 +1,5 @@
 create table local_track (
-  id uuid not null default uuid_generate_v4(),
+  id uuid default uuid_generate_v4(),
   stream_id text not null,
   track_id text not null,
   device text not null,
