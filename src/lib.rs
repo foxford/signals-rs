@@ -28,9 +28,9 @@ use messages::{Envelope, EventKind};
 use topic::{AppTopic, ResourceKind, Topic};
 
 macro_rules! establish_connection {
-    ($pool:expr) => (
+    ($pool: expr) => {
         &$pool.get().expect("Error establishing DB connection")
-    )
+    };
 }
 
 pub mod errors;

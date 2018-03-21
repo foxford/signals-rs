@@ -14,19 +14,19 @@ use messages::track::{CreateEvent, CreateRequest, CreateResponse, DeleteEvent, D
                       RegisterResponse, UnregisterRequest, UnregisterResponse, UpdateEvent};
 
 macro_rules! and_filter {
-    ($query:ident, $filter:ident) => (
+    ($query: ident, $filter: ident) => {
         match $filter {
             query::Filter::RoomId(id) => {
                 $query = $query.filter(agent::room_id.eq(id));
-            },
+            }
             query::Filter::OwnerId(id) => {
                 $query = $query.filter(local_track::owner_id.eq(id));
-            },
+            }
             query::Filter::HolderId(id) => {
                 $query = $query.filter(remote_track::agent_id.eq(id));
             }
         }
-    )
+    };
 }
 
 build_rpc_trait! {
