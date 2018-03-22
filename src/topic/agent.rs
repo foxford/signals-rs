@@ -29,6 +29,16 @@ pub struct AgentTopic {
     pub version: Version,
 }
 
+impl AgentTopic {
+    pub fn new_in(agent_id: Uuid) -> AgentTopic {
+        AgentTopic {
+            kind: AgentTopicKind::In,
+            agent_id,
+            version: Version::V1,
+        }
+    }
+}
+
 impl fmt::Display for AgentTopic {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(

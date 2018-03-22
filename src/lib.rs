@@ -18,14 +18,13 @@ extern crate serde_json;
 extern crate uuid;
 
 use diesel::{PgConnection, r2d2};
-use jsonrpc_core::Notification;
 use rumqtt::{Message as MqttMessage, MqttCallback, MqttClient, MqttOptions, QoS};
 use std::{env, process, thread};
 use std::sync::{mpsc, Arc, Mutex};
 
 use errors::*;
-use messages::{Envelope, EventKind};
-use topic::{AppTopic, ResourceKind, Topic};
+use messages::{Envelope, EventKind, Notification};
+use topic::{AgentTopic, AppTopic, ResourceKind, Topic};
 
 macro_rules! establish_connection {
     ($pool: expr) => {
@@ -48,7 +47,7 @@ pub fn run(mqtt_options: MqttOptions) {
     let (tx, rx) = mpsc::channel::<MqttMessage>();
     let tx = Mutex::new(tx);
 
-    let (event_tx, event_rx) = mpsc::channel::<EventKind>();
+    let (notification_tx, notification_rx) = mpsc::channel::<Notification>();
 
     let callbacks = MqttCallback::new().on_message(move |msg| {
         let tx = tx.lock().unwrap();
@@ -80,11 +79,13 @@ pub fn run(mqtt_options: MqttOptions) {
             let server = rpc::build_server();
 
             for msg in rx.iter() {
-                let event_tx = event_tx.clone();
+                let notification_tx = notification_tx.clone();
                 let pool = pool.clone();
                 let mut client = client.lock().unwrap();
 
-                if let Err(ref e) = handle_message(&server, &mut client, &msg, event_tx, pool) {
+                if let Err(ref e) =
+                    handle_message(&server, &mut client, &msg, notification_tx, pool)
+                {
                     use std::io::Write;
                     let stderr = &mut ::std::io::stderr();
                     let errmsg = "Error writing to stderr";
@@ -99,31 +100,37 @@ pub fn run(mqtt_options: MqttOptions) {
     let handle = thread::spawn({
         let client = Arc::clone(&client);
         move || {
-            for event in event_rx.iter() {
-                let topic = match event {
-                    EventKind::AgentCreate(ref event) => AppTopic {
-                        room_id: event.room_id,
-                        resource: ResourceKind::Agents,
-                    },
-                    EventKind::AgentDelete(ref event) => AppTopic {
-                        room_id: event.room_id,
-                        resource: ResourceKind::Agents,
-                    },
-                    EventKind::TrackCreate(ref event) => AppTopic {
-                        room_id: event.room_id,
-                        resource: ResourceKind::Tracks,
-                    },
-                    EventKind::TrackUpdate(ref event) => AppTopic {
-                        room_id: event.room_id,
-                        resource: ResourceKind::Tracks,
-                    },
-                    EventKind::TrackDelete(ref event) => AppTopic {
-                        room_id: event.room_id,
-                        resource: ResourceKind::Tracks,
-                    },
+            for notification in notification_rx.iter() {
+                let topic = match notification {
+                    Notification::Event(ref kind) => {
+                        let app_topic = match *kind {
+                            EventKind::AgentCreate(ref event) => AppTopic {
+                                room_id: event.room_id,
+                                resource: ResourceKind::Agents,
+                            },
+                            EventKind::AgentDelete(ref event) => AppTopic {
+                                room_id: event.room_id,
+                                resource: ResourceKind::Agents,
+                            },
+                            EventKind::TrackCreate(ref event) => AppTopic {
+                                room_id: event.room_id,
+                                resource: ResourceKind::Tracks,
+                            },
+                            EventKind::TrackUpdate(ref event) => AppTopic {
+                                room_id: event.room_id,
+                                resource: ResourceKind::Tracks,
+                            },
+                            EventKind::TrackDelete(ref event) => AppTopic {
+                                room_id: event.room_id,
+                                resource: ResourceKind::Tracks,
+                            },
+                        };
+                        Topic::App(app_topic)
+                    }
+                    Notification::Method(ref m) => Topic::Agent(AgentTopic::new_in(m.agent_id)),
                 };
 
-                let note = Notification::from(event);
+                let note = jsonrpc_core::Notification::from(notification);
                 let payload = serde_json::to_string(&note).unwrap();
                 println!("EVENT: {}", payload);
 
@@ -159,7 +166,7 @@ fn handle_message(
     server: &rpc::Server,
     mqtt_client: &mut MqttClient,
     mqtt_msg: &MqttMessage,
-    event_tx: ::std::sync::mpsc::Sender<EventKind>,
+    notification_tx: ::std::sync::mpsc::Sender<Notification>,
     pool: DbPool,
 ) -> Result<()> {
     println!("Received message: {:?}", mqtt_msg);
@@ -175,7 +182,7 @@ fn handle_message(
 
     let meta = rpc::Meta {
         subject: envelope.sub,
-        event_tx: Some(event_tx),
+        notification_tx: Some(notification_tx),
         db_pool: Some(pool),
     };
 

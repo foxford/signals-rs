@@ -17,6 +17,9 @@
         - [Unregister](api.tracks.unregister.md)
         - [List](api.tracks.list.md)
     - [Signals](api.signals.md)
+        - [Offer](api.signals.offer.md)
+        - [Answer](api.signals.answer.md)
+        - [Candidate](api.signals.candidate.md)
     - [Subscriptions](api.subscriptions.md)
         - [Create](api.subscriptions.create.md)
 
