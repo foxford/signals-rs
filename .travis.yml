@@ -18,15 +18,18 @@ jobs:
     - stage: commit
       rust: stable
       if: branch != master OR type != push
-    - rust: nightly
-    - rust: nightly
+    - stage: commit
+      rust: nightly
+    - stage: commit
+      rust: nightly
       env: RUSTFMT=1
       before_script: rustup component add rustfmt-preview
       script: cargo fmt -- --write-mode=diff
-    - rust: nightly
+    - stage: commit
+      rust: nightly
       before_script: cargo install clippy --debug --force
       script: cargo clippy
-    - stage: build
+    - stage: docker build/publish
       rust: stable
       sudo: required
       services: docker
@@ -64,7 +67,7 @@ jobs:
 stages:
   - name: warmup
   - name: commit
-  - name: build
+  - name: docker build/publish
     if: branch = master AND type = push
   - name: test
   - name: migrate
