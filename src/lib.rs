@@ -19,8 +19,8 @@ extern crate uuid;
 
 use diesel::{PgConnection, r2d2};
 use rumqtt::{Message as MqttMessage, MqttCallback, MqttClient, MqttOptions, QoS};
-use std::{env, process, thread};
 use std::sync::{mpsc, Arc, Mutex};
+use std::{env, process, thread};
 
 use errors::*;
 use messages::{Envelope, EventKind, Notification};
@@ -38,8 +38,8 @@ pub mod rpc;
 pub mod topic;
 pub mod version;
 
-pub mod schema;
 pub mod models;
+pub mod schema;
 
 type DbPool = r2d2::Pool<r2d2::ConnectionManager<PgConnection>>;
 
