@@ -1,5 +1,5 @@
 #!/bin/bash -e
-GCLOUD_SDK_PATH="${HOME}/${GCLOUD_SDK_DIR:-'google-cloud-sdk'}"
+GCLOUD_SDK_PATH="${HOME}/${GCLOUD_SDK_DIR:-"google-cloud-sdk"}"
 
 if [[ ! ${CLUSTER_NAME} ]]; then >&2 echo "CLUSTER_NAME is not specified"; exit 1; fi
 if [[ ! ${PROJECT} ]]; then >&2 echo "PROJECT is not specified"; exit 1; fi
