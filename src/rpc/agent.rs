@@ -8,11 +8,11 @@ use models;
 use rpc;
 use schema::{agent, local_track, room};
 
-use messages::{query_parameters, track};
 use messages::EventKind;
 use messages::agent::{CreateEvent, CreateRequest, CreateResponse, DeleteEvent, DeleteRequest,
                       DeleteResponse, ListRequest, ListResponse, ReadRequest, ReadResponse,
                       UpdateRequest, UpdateResponse};
+use messages::{query_parameters, track};
 
 build_rpc_trait! {
     pub trait Rpc {

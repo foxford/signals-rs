@@ -5,10 +5,10 @@ use std::ops::Deref;
 use uuid::Uuid;
 
 pub mod agent;
+pub mod query_parameters;
 pub mod room;
 pub mod subscription;
 pub mod track;
-pub mod query_parameters;
 pub mod webrtc;
 
 #[derive(Debug, PartialEq, Serialize, Deserialize)]

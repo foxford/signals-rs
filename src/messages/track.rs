@@ -1,8 +1,8 @@
 use models;
 use uuid::Uuid;
 
-use messages::{Event, EventKind};
 use messages::query_parameters::QueryParameters;
+use messages::{Event, EventKind};
 
 // Create
 

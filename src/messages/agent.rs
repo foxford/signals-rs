@@ -1,8 +1,8 @@
 use chrono::NaiveDateTime;
 use uuid::Uuid;
 
-use messages::{Event, EventKind};
 use messages::query_parameters::QueryParameters;
+use messages::{Event, EventKind};
 use models;
 
 // Create

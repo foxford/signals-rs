@@ -11,8 +11,8 @@ use rpc::subscription::Rpc as SubscriptionRpc;
 use rpc::track::Rpc as TrackRpc;
 use rpc::webrtc::Rpc as WebrtcRpc;
 
-mod ping;
 mod agent;
+mod ping;
 mod room;
 mod subscription;
 mod track;
