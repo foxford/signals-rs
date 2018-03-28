@@ -17,7 +17,6 @@ jobs:
   include:
     - stage: commit
       rust: stable
-      if: branch != master OR type != push
     - stage: commit
       rust: nightly
     - stage: commit
@@ -52,7 +51,7 @@ jobs:
       rust: stable
       before_script:
         - cargo install mdbook || true
-      after_success:
+      script:
         - |
           ./scripts/gcloud.install.sh &&
           mdbook build docs/ --dest-dir site/book/ &&
