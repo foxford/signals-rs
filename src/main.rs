@@ -4,7 +4,7 @@ extern crate signals;
 use std::env;
 
 macro_rules! invalid_env {
-    ($var: expr, $err: ident) => {{
+    ($var:expr, $err:ident) => {{
         println!("{} {}", $var, $err);
         std::process::exit(1);
     }};
