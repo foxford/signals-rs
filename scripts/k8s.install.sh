@@ -6,7 +6,7 @@ if [[ ! ${PROJECT} ]]; then >&2 echo "PROJECT is not specified"; exit 1; fi
 if [[ ! ${ZONE} ]]; then >&2 echo "ZONE is not specified"; exit 1; fi
 
 source ${GCLOUD_SDK_PATH}/path.bash.inc
-gcloud components install kubectl -q
+gcloud components install kubectl --quiet
 gcloud container clusters get-credentials ${CLUSTER_NAME} \
     --zone ${ZONE} \
     --project ${PROJECT}

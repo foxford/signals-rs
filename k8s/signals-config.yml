@@ -3,6 +3,6 @@ kind: ConfigMap
 metadata:
   name: signals-sample
 data:
-  mqtt-host:
-  mqtt-client-id:
-  database-instance:
+  mqtt-host: ''
+  mqtt-client-id: ''
+  database-instance: ''
