@@ -116,10 +116,6 @@ pub fn run(mqtt_options: MqttOptions) {
                                 room_id: event.room_id,
                                 resource: ResourceKind::Tracks,
                             },
-                            EventKind::TrackUpdate(ref event) => AppTopic {
-                                room_id: event.room_id,
-                                resource: ResourceKind::Tracks,
-                            },
                             EventKind::TrackDelete(ref event) => AppTopic {
                                 room_id: event.room_id,
                                 resource: ResourceKind::Tracks,

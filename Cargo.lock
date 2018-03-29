@@ -83,6 +83,7 @@ dependencies = [
  "diesel_derives 1.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "pq-sys 0.4.4 (registry+https://github.com/rust-lang/crates.io-index)",
  "r2d2 0.8.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "serde_json 1.0.13 (registry+https://github.com/rust-lang/crates.io-index)",
  "uuid 0.5.1 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 

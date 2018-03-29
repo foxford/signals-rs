@@ -1,8 +1,9 @@
-use models;
+use serde_json::Value;
 use uuid::Uuid;
 
 use messages::query_parameters::QueryParameters;
 use messages::{Event, EventKind};
+use models;
 
 // Create
 
@@ -12,57 +13,34 @@ pub struct CreateRequest {
     pub data: CreateRequestData,
 }
 
-type CreateRequestData = models::NewLocalTrack;
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct CreateRequestData {
+    pub owner_id: Uuid,
+    pub metadata: Value,
+}
+
 #[derive(Clone, Debug, Serialize)]
 pub struct CreateResponse {
     id: Uuid,
     data: CreateResponseData,
 }
 
-#[derive(Clone, Debug, Serialize)]
-struct CreateResponseData {
-    pub stream_id: String,
-    pub track_id: String,
-    pub device: String,
-    pub kind: String,
-    pub label: String,
-    pub owner_id: Uuid,
-    pub holders: Vec<Holder>,
-}
-
-#[derive(Clone, Debug, Serialize)]
-struct Holder {
-    id: Uuid,
-}
-
 impl CreateResponse {
-    pub fn new(
-        track: &models::LocalTrack,
-        remote_tracks: &[models::RemoteTrack],
-    ) -> CreateResponse {
+    pub fn new(track: &models::Track) -> CreateResponse {
         CreateResponse {
             id: track.id,
-            data: CreateResponseData::new(track, remote_tracks),
+            data: CreateResponseData::new(track),
         }
     }
 }
 
+type CreateResponseData = CreateRequestData;
+
 impl CreateResponseData {
-    fn new(
-        track: &models::LocalTrack,
-        remote_tracks: &[models::RemoteTrack],
-    ) -> CreateResponseData {
+    fn new(track: &models::Track) -> CreateResponseData {
         CreateResponseData {
-            stream_id: track.stream_id.clone(),
-            track_id: track.track_id.clone(),
-            device: track.device.clone(),
-            kind: track.kind.clone(),
-            label: track.label.clone(),
             owner_id: track.owner_id,
-            holders: remote_tracks
-                .iter()
-                .map(|t| Holder { id: t.agent_id })
-                .collect(),
+            metadata: track.metadata.clone(),
         }
     }
 }
@@ -76,38 +54,6 @@ impl From<CreateEvent> for EventKind {
 }
 
 // Create
-
-// Update
-
-#[derive(Clone, Debug, Serialize)]
-pub struct UpdateResponse {
-    id: Uuid,
-    data: UpdateResponseData,
-}
-
-impl UpdateResponse {
-    pub fn new(
-        track: &models::LocalTrack,
-        remote_tracks: &[models::RemoteTrack],
-    ) -> UpdateResponse {
-        UpdateResponse {
-            id: track.id,
-            data: UpdateResponseData::new(track, remote_tracks),
-        }
-    }
-}
-
-type UpdateResponseData = CreateResponseData;
-
-pub type UpdateEvent = Event<UpdateResponse>;
-
-impl From<UpdateEvent> for EventKind {
-    fn from(event: UpdateEvent) -> Self {
-        EventKind::TrackUpdate(event)
-    }
-}
-
-// Update
 
 // Delete
 
@@ -126,13 +72,10 @@ pub struct DeleteResponse {
 type DeleteResponseData = CreateResponseData;
 
 impl DeleteResponse {
-    pub fn new(
-        track: &models::LocalTrack,
-        remote_tracks: &[models::RemoteTrack],
-    ) -> DeleteResponse {
+    pub fn new(track: &models::Track) -> DeleteResponse {
         DeleteResponse {
             id: track.id,
-            data: DeleteResponseData::new(track, remote_tracks),
+            data: DeleteResponseData::new(track),
         }
     }
 }
@@ -147,32 +90,6 @@ impl From<DeleteEvent> for EventKind {
 
 // Delete
 
-// Register
-
-#[derive(Debug, Deserialize)]
-pub struct RegisterRequest {
-    pub room_id: Uuid,
-    pub data: RegisterRequestData,
-}
-
-#[derive(Debug, Deserialize)]
-pub struct RegisterRequestData {
-    pub stream_id: String,
-    pub track_id: String,
-    pub agent_id: Uuid,
-}
-
-pub type RegisterResponse = UpdateResponse;
-
-// Register
-
-// Unregister
-
-pub type UnregisterRequest = RegisterRequest;
-pub type UnregisterResponse = RegisterResponse;
-
-// Unregister
-
 // List
 
 pub type ListRequest = QueryParameters;
@@ -181,10 +98,10 @@ pub type ListRequest = QueryParameters;
 pub struct ListResponse(Vec<ListResponseData>);
 
 impl ListResponse {
-    pub fn new(tracks: &[(models::LocalTrack, Vec<models::RemoteTrack>)]) -> ListResponse {
+    pub fn new(tracks: &[models::Track]) -> ListResponse {
         let data: Vec<ListResponseData> = tracks
             .iter()
-            .map(|track| ListResponseData::new(&track.0, &track.1))
+            .map(|track| ListResponseData::new(track))
             .collect();
 
         ListResponse(data)

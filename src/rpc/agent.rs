@@ -6,13 +6,14 @@ use diesel::prelude::*;
 use errors::{Error, ErrorKind, Result};
 use models;
 use rpc;
-use schema::{agent, local_track, room};
+use schema::{agent, room, track};
 
 use messages::EventKind;
 use messages::agent::{CreateEvent, CreateRequest, CreateResponse, DeleteEvent, DeleteRequest,
                       DeleteResponse, ListRequest, ListResponse, ReadRequest, ReadResponse,
                       UpdateRequest, UpdateResponse};
-use messages::{query_parameters, track};
+use messages::query_parameters;
+use messages::track::{DeleteEvent as TrackDeleteEvent, DeleteResponse as TrackDeleteResponse};
 
 build_rpc_trait! {
     pub trait Rpc {
@@ -99,9 +100,8 @@ impl Rpc for RpcImpl {
             .first::<models::Agent>(conn)?;
 
         let (agent, tracks) = conn.transaction::<_, Error, _>(|| {
-            let tracks = diesel::delete(
-                local_track::table.filter(local_track::owner_id.eq(agent.id)),
-            ).get_results::<models::LocalTrack>(conn)?;
+            let tracks = diesel::delete(track::table.filter(track::owner_id.eq(agent.id)))
+                .get_results::<models::Track>(conn)?;
 
             let agent = diesel::delete(&agent).get_result::<models::Agent>(conn)?;
 
@@ -111,8 +111,8 @@ impl Rpc for RpcImpl {
         let notification_tx = meta.notification_tx.unwrap();
 
         for track in &tracks {
-            let resp = track::DeleteResponse::new(track, &[]);
-            let event = track::DeleteEvent::new(req.room_id, resp);
+            let resp = TrackDeleteResponse::new(track);
+            let event = TrackDeleteEvent::new(req.room_id, resp);
             let event_kind = EventKind::from(event);
             notification_tx.send(event_kind.into()).unwrap();
         }

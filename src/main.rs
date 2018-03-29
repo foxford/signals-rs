@@ -30,7 +30,7 @@ fn main() {
         .set_broker(&mqtt_url);
 
     if let Err(err) = env::var("DATABASE_URL") {
-        invalid_env!("DATABASE_URL {}", err);
+        invalid_env!("DATABASE_URL", err);
     }
 
     signals::run(mqtt_options);
