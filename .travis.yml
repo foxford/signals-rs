@@ -54,6 +54,7 @@ jobs:
       script:
         - |
           ./scripts/gcloud.install.sh &&
+          source ${HOME}/google-cloud-sdk/path.bash.inc
           mdbook build docs/ --dest-dir site/book/ &&
           cargo doc --no-deps &&
           mv target/doc docs/site/rustdoc &&
