@@ -61,9 +61,9 @@ jobs:
           gsutil -m rm -rf gs://signals-rs.docs.netology-group.services/* &&
           gsutil -m mv -ra public-read docs/site/* gs://signals-rs.docs.netology-group.services &&
           rm -rf docs/site/book docs/site/rustdoc
-  script:
-    - cargo test
-    - cargo build
+script:
+  - cargo build
+  - cargo test
 stages:
   - name: warmup
   - name: commit
