@@ -68,7 +68,6 @@ pub enum Oper {
 pub enum Filter {
     RoomId(Uuid),
     OwnerId(Uuid),
-    HolderId(Uuid),
 }
 
 named!(room_filter<CompleteStr, Filter>, preceded!(
@@ -87,16 +86,8 @@ named!(owner_filter<CompleteStr, Filter>, preceded!(
     )
 ));
 
-named!(holder_filter<CompleteStr, Filter>, preceded!(
-    tag_s!("holders.id:"),
-    map!(
-        map_res!(take_s!(36), |s: CompleteStr| FromStr::from_str(s.0)),
-        Filter::HolderId
-    )
-));
-
 named!(filter<CompleteStr, Filter>, alt!(
-    room_filter | owner_filter | holder_filter
+    room_filter | owner_filter
 ));
 
 named!(parenthesis<CompleteStr, Expr>, delimited!(
@@ -199,48 +190,6 @@ mod tests {
         );
 
         assert_eq!(term(CompleteStr(&input)), Ok((CompleteStr(""), expected)));
-    }
-
-    #[test]
-    fn parse_expr() {
-        let room_id = Uuid::parse_str("7945cf5b-2c73-4936-80cb-5cce27e9950d").unwrap();
-        let owner_id = Uuid::parse_str("55e813bc-0c9b-4270-9f7f-81e5ffcfc9ff").unwrap();
-        let holder_id = Uuid::parse_str("30ae48f8-57c1-4704-ba48-19edb3c22b09").unwrap();
-
-        let input = format!(
-            " owner_id:{}  OR holders.id:{} AND room_id:{} ",
-            owner_id, holder_id, room_id
-        );
-        let expected = Expr::Or(
-            Box::new(Expr::Value(Filter::OwnerId(owner_id))),
-            Box::new(Expr::And(
-                Box::new(Expr::Value(Filter::HolderId(holder_id))),
-                Box::new(Expr::Value(Filter::RoomId(room_id))),
-            )),
-        );
-
-        assert_eq!(expr(CompleteStr(&input)), Ok((CompleteStr(""), expected)));
-    }
-
-    #[test]
-    fn parse_parenthesis() {
-        let room_id = Uuid::parse_str("7945cf5b-2c73-4936-80cb-5cce27e9950d").unwrap();
-        let owner_id = Uuid::parse_str("55e813bc-0c9b-4270-9f7f-81e5ffcfc9ff").unwrap();
-        let holder_id = Uuid::parse_str("30ae48f8-57c1-4704-ba48-19edb3c22b09").unwrap();
-
-        let input = format!(
-            " ( owner_id:{}  OR holders.id:{} ) AND room_id:{} ",
-            owner_id, holder_id, room_id
-        );
-        let expected = Expr::And(
-            Box::new(Expr::Parenthesis(Box::new(Expr::Or(
-                Box::new(Expr::Value(Filter::OwnerId(owner_id))),
-                Box::new(Expr::Value(Filter::HolderId(holder_id))),
-            )))),
-            Box::new(Expr::Value(Filter::RoomId(room_id))),
-        );
-
-        assert_eq!(expr(CompleteStr(&input)), Ok((CompleteStr(""), expected)));
     }
 
     #[test]

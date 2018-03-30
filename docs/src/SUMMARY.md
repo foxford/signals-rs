@@ -13,8 +13,6 @@
     - [Tracks](api.tracks.md)
         - [Create](api.tracks.create.md)
         - [Delete](api.tracks.delete.md)
-        - [Register](api.tracks.register.md)
-        - [Unregister](api.tracks.unregister.md)
         - [List](api.tracks.list.md)
     - [Signals](api.signals.md)
         - [Offer](api.signals.offer.md)

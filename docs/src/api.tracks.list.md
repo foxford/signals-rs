@@ -34,16 +34,6 @@ You can use logical operators `AND`, `OR`
 "fq": "owner_id:1154b35c-e5b0-4a42-8ab2-d4967ce38c9e"
 ```
 
-- List of remote tracks of a specific agent
-```
-"fq": "holders.id:1154b35c-e5b0-4a42-8ab2-d4967ce38c9e"
-```
-
-- List of all tracks of a specific agent
-```
-"fq": "owner_id:1154b35c-e5b0-4a42-8ab2-d4967ce38c9e OR holders.id:1154b35c-e5b0-4a42-8ab2-d4967ce38c9e"
-```
-
 ## Response
 
 ```
@@ -58,33 +48,15 @@ agents/A(a)u1/in/signals.netology-group.services/api/v1
         {
             "id": "915adba9-5586-4743-a22e-47cc57260e37",
             "data": {
-                "stream_id": "b16724bb-e970-4f4e-93c6-ac0649d43bc9",
-                "track_id": "0ba2daf8-dfa3-4e64-b535-681508b6834d",
-                "device": "camera",
-                "kind": "video",
-                "label": "human readable",
                 "owner_id": "1154b35c-e5b0-4a42-8ab2-d4967ce38c9e",
-                "holders": [
-                    {
-                        "id": "9839b399-e5f5-4f1c-acb8-bad33db615a9"
-                    }
-                ]
+                "metadata": {}
             }
         },
         {
             "id": "470b537a-ec18-420b-81b5-04ba0ca8e014",
             "data": {
-                "stream_id": "688e7193-6a7f-48b3-a1a2-c76402144282",
-                "track_id": "9923576c-1ee5-4987-a797-6cb4982d45de",
-                "device": "camera",
-                "kind": "video",
-                "label": "human readable",
-                "owner_id": "9839b399-e5f5-4f1c-acb8-bad33db615a9",
-                "holders": [
-                    {
-                        "id": "1154b35c-e5b0-4a42-8ab2-d4967ce38c9e"
-                    }
-                ]
+                "owner_id": "9923576c-1ee5-4987-a797-6cb4982d45de",
+                "metadata": {}
             }
         }
     ],

@@ -58,8 +58,6 @@ pub enum EventKind {
     AgentDelete(agent::DeleteEvent),
     #[serde(rename = "track.create")]
     TrackCreate(track::CreateEvent),
-    #[serde(rename = "track.update")]
-    TrackUpdate(track::UpdateEvent),
     #[serde(rename = "track.delete")]
     TrackDelete(track::DeleteEvent),
 }
