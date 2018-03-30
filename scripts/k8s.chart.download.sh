@@ -7,7 +7,7 @@ if [[ ! ${GITHUB_REPO_OWNER} ]]; then >&2 echo "GITHUB_REPO_OWNER is not specifi
 if [[ ! ${GITHUB_REPO_PATH} ]]; then >&2 echo "GITHUB_REPO_PATH is not specified"; exit 1; fi
 if [[ ! ${GITHUB_REPO} ]]; then >&2 echo "GITHUB_REPO is not specified"; exit 1; fi
 
-FILE_TO_DOWNLOAD=${FILE_TO_DOWNLOAD:-"${APP}-config.yaml"}
+FILE_TO_DOWNLOAD=${FILE_TO_DOWNLOAD:-"${APP}-configmap.yaml"}
 PATH_TO_FILE="${PATH_TO_FILE:-$(pwd)}/${FILE_TO_DOWNLOAD}"
 
 GITHUB_FILE="https://api.github.com/repos/${GITHUB_REPO_OWNER}/${GITHUB_REPO}/contents/${GITHUB_REPO_PATH}/${CLUSTER_NAME}/apps/${APP}/ns/${NAMESPACE}/${FILE_TO_DOWNLOAD}"

@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: signals-configmap
+data:
+  mqtt-host: 'mqtt.domain.gtld'
+  mqtt-client-id: 'mqtt-client-id'
+  database-instance: 'project:region:instance:port'

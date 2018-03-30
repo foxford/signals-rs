@@ -21,12 +21,12 @@ spec:
             - name: MQTT_HOST
               valueFrom:
                 configMapKeyRef:
-                  name: signals
+                  name: signals-configmap
                   key: mqtt-host
             - name: MQTT_CLIENT_ID
               valueFrom:
                 configMapKeyRef:
-                  name: signals
+                  name: signals-configmap
                   key: mqtt-client-id
             - name: DATABASE_URL
               valueFrom:
@@ -46,7 +46,7 @@ spec:
             - name: DATABASE_INSTANCE
               valueFrom:
                 configMapKeyRef:
-                  name: signals
+                  name: signals-configmap
                   key: database-instance
           command: [ "/cloud_sql_proxy" ]
           args: [

@@ -1,8 +1,7 @@
 language: rust
 cache:
+  cargo: true
   directories:
-    - ${HOME}/.cargo
-    - ${TRAVIS_BUILD_DIR}/target
     - ${HOME}/google-cloud-sdk
 sudo: false
 git:
@@ -32,7 +31,7 @@ jobs:
       rust: stable
       sudo: required
       services: docker
-      script: DOCKER_IMAGE_NAME=signals-rs ./scripts/docker.image.publish.sh
+      script: DOCKER_IMAGE_NAME=signals-rs scripts/docker.image.publish.sh
     - stage: migrate
       rust: stable
       before_script: cargo install diesel_cli
@@ -43,17 +42,17 @@ jobs:
         - NAMESPACE=staging APP=signals
       script:
         - |
-          ./scripts/gcloud.install.sh &&
-          ./scripts/k8s.install.sh &&
-          PATH_TO_FILE=${TRAVIS_BUILD_DIR}/k8s ./scripts/k8s.chart.download.sh &&
-          PATH_TO_CHARTS=${TRAVIS_BUILD_DIR}/k8s ./scripts/k8s.charts.apply.sh
+          scripts/gcloud.install.sh &&
+          scripts/k8s.install.sh &&
+          PATH_TO_FILE=${TRAVIS_BUILD_DIR}/k8s scripts/k8s.chart.download.sh &&
+          PATH_TO_CHARTS=${TRAVIS_BUILD_DIR}/k8s/[^_]** scripts/k8s.charts.apply.sh
     - stage: publish
       rust: stable
       before_script:
         - cargo install mdbook || true
       script:
         - |
-          ./scripts/gcloud.install.sh &&
+          scripts/gcloud.install.sh &&
           source ${HOME}/google-cloud-sdk/path.bash.inc
           mdbook build docs/ --dest-dir site/book/ &&
           cargo doc --no-deps &&
