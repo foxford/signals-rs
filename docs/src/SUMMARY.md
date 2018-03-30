@@ -10,6 +10,8 @@
         - [Update](api.agents.update.md)
         - [Delete](api.agents.delete.md)
         - [List](api.agents.list.md)
+        - [Join room](api.agents.join_room.md)
+        - [Leave room](api.agents.leave_room.md)
     - [Tracks](api.tracks.md)
         - [Create](api.tracks.create.md)
         - [Delete](api.tracks.delete.md)

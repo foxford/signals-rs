@@ -9,45 +9,17 @@ use models;
 
 #[derive(Debug, Deserialize)]
 pub struct CreateRequest {
-    pub room_id: Uuid,
     pub id: Uuid,
-    pub data: CreateRequestData,
 }
 
-#[derive(Clone, Debug, Deserialize)]
-pub struct CreateRequestData {
-    pub label: String,
-}
-
-#[derive(Clone, Debug, Serialize)]
+#[derive(Debug, Serialize)]
 pub struct CreateResponse {
     id: Uuid,
-    data: CreateResponseData,
-}
-
-#[derive(Clone, Debug, Serialize)]
-struct CreateResponseData {
-    label: String,
-    created_at: NaiveDateTime,
 }
 
 impl CreateResponse {
     pub fn new(agent: &models::Agent) -> CreateResponse {
-        CreateResponse {
-            id: agent.id,
-            data: CreateResponseData {
-                label: agent.label.clone(),
-                created_at: agent.created_at,
-            },
-        }
-    }
-}
-
-pub type CreateEvent = Event<CreateResponse>;
-
-impl From<CreateEvent> for EventKind {
-    fn from(event: CreateEvent) -> Self {
-        EventKind::AgentCreate(event)
+        CreateResponse { id: agent.id }
     }
 }
 
@@ -61,35 +33,17 @@ pub struct ReadRequest {
     pub id: Uuid,
 }
 
-pub type ReadResponse = CreateResponse;
-type ReadResponseData = CreateResponseData;
-
-// Read
-
-// Update
-
-pub type UpdateRequest = CreateRequest;
-pub type UpdateResponse = CreateResponse;
-
-// Update
-
-// Delete
-
-pub type DeleteRequest = ReadRequest;
-
 #[derive(Clone, Debug, Serialize)]
-pub struct DeleteResponse {
+pub struct ReadResponse {
     id: Uuid,
-    data: DeleteResponseData,
+    data: ReadResponseData,
 }
 
-type DeleteResponseData = ReadResponseData;
-
-impl DeleteResponse {
-    pub fn new(agent: &models::Agent) -> DeleteResponse {
-        DeleteResponse {
-            id: agent.id,
-            data: DeleteResponseData {
+impl ReadResponse {
+    pub fn new(agent: &models::RoomAgent) -> ReadResponse {
+        ReadResponse {
+            id: agent.agent_id,
+            data: ReadResponseData {
                 label: agent.label.clone(),
                 created_at: agent.created_at,
             },
@@ -97,13 +51,25 @@ impl DeleteResponse {
     }
 }
 
-pub type DeleteEvent = Event<DeleteResponse>;
-
-impl From<DeleteEvent> for EventKind {
-    fn from(event: DeleteEvent) -> Self {
-        EventKind::AgentDelete(event)
-    }
+#[derive(Clone, Debug, Serialize)]
+struct ReadResponseData {
+    label: String,
+    created_at: NaiveDateTime,
 }
+
+// Read
+
+// Update
+
+pub type UpdateRequest = JoinRequest;
+pub type UpdateResponse = JoinResponse;
+
+// Update
+
+// Delete
+
+pub type DeleteRequest = CreateRequest;
+pub type DeleteResponse = CreateResponse;
 
 // Delete
 
@@ -115,11 +81,11 @@ pub type ListRequest = QueryParameters;
 pub struct ListResponse(Vec<ListResponseData>);
 
 impl ListResponse {
-    pub fn new(agents: &[models::Agent]) -> ListResponse {
+    pub fn new(agents: &[models::RoomAgent]) -> ListResponse {
         let data: Vec<ListResponseData> = agents
             .iter()
             .map(|agent| ListResponseData {
-                id: agent.id,
+                id: agent.agent_id,
                 data: ReadResponseData {
                     label: agent.label.clone(),
                     created_at: agent.created_at,
@@ -134,3 +100,105 @@ impl ListResponse {
 type ListResponseData = ReadResponse;
 
 // List
+
+// Join
+
+#[derive(Debug, Deserialize)]
+pub struct JoinRequest {
+    pub room_id: Uuid,
+    pub id: Uuid,
+    pub data: JoinRequestData,
+}
+
+#[derive(Clone, Debug, Deserialize)]
+pub struct JoinRequestData {
+    pub label: String,
+}
+
+#[derive(Clone, Debug, Serialize)]
+pub struct JoinResponse {
+    id: Uuid,
+    data: JoinResponseData,
+}
+
+#[derive(Clone, Debug, Serialize)]
+struct JoinResponseData {
+    label: String,
+    created_at: NaiveDateTime,
+}
+
+impl JoinResponse {
+    pub fn new(agent: &models::RoomAgent) -> JoinResponse {
+        JoinResponse {
+            id: agent.agent_id,
+            data: JoinResponseData {
+                label: agent.label.clone(),
+                created_at: agent.created_at,
+            },
+        }
+    }
+}
+
+#[derive(Debug, Serialize)]
+pub struct JoinEventPayload {
+    agent_id: Uuid,
+    room_id: Uuid,
+}
+
+impl JoinEventPayload {
+    pub fn new(agent_id: Uuid, room_id: Uuid) -> JoinEventPayload {
+        JoinEventPayload { agent_id, room_id }
+    }
+}
+
+pub type JoinEvent = Event<JoinEventPayload>;
+
+impl From<JoinEvent> for EventKind {
+    fn from(event: JoinEvent) -> Self {
+        EventKind::AgentJoin(event)
+    }
+}
+
+// Join
+
+// Leave
+
+#[derive(Debug, Deserialize)]
+pub struct LeaveRequest {
+    pub room_id: Uuid,
+    pub id: Uuid,
+}
+
+#[derive(Clone, Debug, Serialize)]
+pub struct LeaveResponse {
+    id: Uuid,
+    data: LeaveResponseData,
+}
+
+#[derive(Clone, Debug, Serialize)]
+struct LeaveResponseData {
+    label: String,
+    created_at: NaiveDateTime,
+}
+
+impl LeaveResponse {
+    pub fn new(agent: &models::RoomAgent) -> LeaveResponse {
+        LeaveResponse {
+            id: agent.agent_id,
+            data: LeaveResponseData {
+                label: agent.label.clone(),
+                created_at: agent.created_at,
+            },
+        }
+    }
+}
+
+pub type LeaveEvent = Event<LeaveResponse>;
+
+impl From<LeaveEvent> for EventKind {
+    fn from(event: LeaveEvent) -> Self {
+        EventKind::AgentLeave(event)
+    }
+}
+
+// Leave

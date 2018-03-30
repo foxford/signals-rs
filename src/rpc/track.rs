@@ -1,23 +1,23 @@
-use std::str::FromStr;
-
-use diesel;
 use diesel::prelude::*;
+use diesel::{self, PgConnection};
+use uuid::Uuid;
 
-use models;
-use rpc;
-use rpc::error::{Error, Result};
-use schema::{agent, room, track};
+use std::str::FromStr;
 
 use messages::EventKind;
 use messages::query_parameters;
 use messages::track::{CreateEvent, CreateRequest, CreateResponse, DeleteEvent, DeleteRequest,
                       DeleteResponse, ListRequest, ListResponse};
+use models;
+use rpc;
+use rpc::error::{Error, Result};
+use schema::{agent, room_agent, track};
 
 macro_rules! and_filter {
     ($query:ident, $filter:ident) => {
         match $filter {
             query_parameters::Filter::RoomId(id) => {
-                $query = $query.filter(agent::room_id.eq(id));
+                $query = $query.filter(room_agent::room_id.eq(id));
             }
             query_parameters::Filter::OwnerId(id) => {
                 $query = $query.filter(track::owner_id.eq(id));
@@ -49,8 +49,7 @@ impl Rpc for RpcImpl {
     fn create(&self, meta: rpc::Meta, req: CreateRequest) -> Result<CreateResponse> {
         let conn = establish_connection!(meta.db_pool.unwrap());
 
-        let room: models::Room = room::table.find(req.room_id).first(conn)?;
-
+        let agent_id = req.data.owner_id;
         let changeset = models::NewTrack::from(req);
 
         let track: models::Track = diesel::insert_into(track::table)
@@ -59,10 +58,13 @@ impl Rpc for RpcImpl {
 
         let resp = CreateResponse::new(&track);
 
-        let event = CreateEvent::new(room.id, resp.clone());
         let notification_tx = meta.notification_tx.unwrap();
-        let event_kind = EventKind::from(event);
-        notification_tx.send(event_kind.into()).unwrap();
+        let room_ids = get_agent_room_ids(conn, agent_id)?;
+        for room_id in room_ids {
+            let event = CreateEvent::new(room_id, resp.clone());
+            let event_kind = EventKind::from(event);
+            notification_tx.send(event_kind.into()).unwrap();
+        }
 
         Ok(resp)
     }
@@ -70,20 +72,18 @@ impl Rpc for RpcImpl {
     fn delete(&self, meta: rpc::Meta, req: DeleteRequest) -> Result<DeleteResponse> {
         let conn = establish_connection!(meta.db_pool.unwrap());
 
-        let track: models::Track = track::table
-            .select(track::all_columns)
-            .inner_join(agent::table)
-            .filter(agent::room_id.eq(req.room_id))
-            .filter(track::id.eq(req.id))
-            .first(conn)?;
+        let target = track::table.find(req.id);
+        let track = diesel::delete(target).get_result(conn)?;
 
-        let track = diesel::delete(&track).get_result(conn)?;
         let resp = DeleteResponse::new(&track);
 
-        let event = DeleteEvent::new(req.room_id, resp.clone());
         let notification_tx = meta.notification_tx.unwrap();
-        let event_kind = EventKind::from(event);
-        notification_tx.send(event_kind.into()).unwrap();
+        let room_ids = get_agent_room_ids(conn, track.owner_id)?;
+        for room_id in room_ids {
+            let event = DeleteEvent::new(room_id, resp.clone());
+            let event_kind = EventKind::from(event);
+            notification_tx.send(event_kind.into()).unwrap();
+        }
 
         Ok(resp)
     }
@@ -93,7 +93,8 @@ impl Rpc for RpcImpl {
 
         let mut query = track::table
             .select(track::all_columns)
-            .left_join(agent::table)
+            .distinct()
+            .left_join(agent::table.left_join(room_agent::table))
             .into_boxed();
 
         if let Some(fq) = req.fq {
@@ -126,4 +127,12 @@ impl Rpc for RpcImpl {
 
         Ok(ListResponse::new(&tracks))
     }
+}
+
+fn get_agent_room_ids(conn: &PgConnection, agent_id: Uuid) -> Result<Vec<Uuid>> {
+    room_agent::table
+        .select(room_agent::room_id)
+        .filter(room_agent::agent_id.eq(agent_id))
+        .get_results(conn)
+        .map_err(Error::from)
 }

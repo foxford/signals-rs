@@ -9,7 +9,6 @@ use models;
 
 #[derive(Debug, Deserialize)]
 pub struct CreateRequest {
-    pub room_id: Uuid,
     pub data: CreateRequestData,
 }
 
@@ -59,7 +58,6 @@ impl From<CreateEvent> for EventKind {
 
 #[derive(Debug, Deserialize)]
 pub struct DeleteRequest {
-    pub room_id: Uuid,
     pub id: Uuid,
 }
 

@@ -52,10 +52,10 @@ impl From<Notification> for jsonrpc_core::Notification {
 #[derive(Debug, Serialize)]
 #[serde(tag = "type")]
 pub enum EventKind {
-    #[serde(rename = "agent.create")]
-    AgentCreate(agent::CreateEvent),
-    #[serde(rename = "agent.delete")]
-    AgentDelete(agent::DeleteEvent),
+    #[serde(rename = "agent.join_room")]
+    AgentJoin(agent::JoinEvent),
+    #[serde(rename = "agent.leave_room")]
+    AgentLeave(agent::LeaveEvent),
     #[serde(rename = "track.create")]
     TrackCreate(track::CreateEvent),
     #[serde(rename = "track.delete")]

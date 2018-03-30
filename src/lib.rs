@@ -99,11 +99,11 @@ pub fn run(mqtt_options: MqttOptions) {
                 let topic = match notification {
                     Notification::Event(ref kind) => {
                         let app_topic = match *kind {
-                            EventKind::AgentCreate(ref event) => AppTopic {
+                            EventKind::AgentJoin(ref event) => AppTopic {
                                 room_id: event.room_id,
                                 resource: ResourceKind::Agents,
                             },
-                            EventKind::AgentDelete(ref event) => AppTopic {
+                            EventKind::AgentLeave(ref event) => AppTopic {
                                 room_id: event.room_id,
                                 resource: ResourceKind::Agents,
                             },
