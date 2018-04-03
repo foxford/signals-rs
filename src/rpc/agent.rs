@@ -3,9 +3,9 @@ use std::str::FromStr;
 use diesel;
 use diesel::prelude::*;
 
-use errors::{Error, ErrorKind, Result};
 use models;
 use rpc;
+use rpc::error::{Error, Result};
 use schema::{agent, room, track};
 
 use messages::EventKind;
@@ -136,9 +136,9 @@ impl Rpc for RpcImpl {
                     query_parameters::Filter::RoomId(id) => {
                         query = query.filter(agent::room_id.eq(id));
                     }
-                    _ => Err(ErrorKind::BadRequest)?,
+                    _ => Err(Error::BadRequest)?,
                 },
-                _ => Err(ErrorKind::BadRequest)?,
+                _ => Err(Error::BadRequest)?,
             }
         }
 

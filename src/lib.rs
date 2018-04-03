@@ -1,10 +1,6 @@
-#![recursion_limit = "1024"]
-
 extern crate chrono;
 #[macro_use]
 extern crate diesel;
-#[macro_use]
-extern crate error_chain;
 extern crate jsonrpc_core;
 #[macro_use]
 extern crate jsonrpc_macros;
@@ -16,13 +12,14 @@ extern crate serde;
 extern crate serde_derive;
 extern crate serde_json;
 extern crate uuid;
+#[macro_use]
+extern crate failure;
 
 use diesel::{PgConnection, r2d2};
 use rumqtt::{Message as MqttMessage, MqttCallback, MqttClient, MqttOptions, QoS};
 use std::sync::{mpsc, Arc, Mutex};
 use std::{env, process, thread};
 
-use errors::*;
 use messages::{Envelope, EventKind, Notification};
 use topic::{AgentTopic, AppTopic, ResourceKind, Topic};
 
@@ -32,7 +29,7 @@ macro_rules! establish_connection {
     };
 }
 
-pub mod errors;
+pub mod error;
 pub mod messages;
 pub mod rpc;
 pub mod topic;
@@ -83,13 +80,11 @@ pub fn run(mqtt_options: MqttOptions) {
                 let pool = pool.clone();
                 let mut client = client.lock().unwrap();
 
-                if let Err(ref e) =
-                    handle_message(&server, &mut client, &msg, notification_tx, pool)
-                {
+                if let Err(e) = handle_message(&server, &mut client, &msg, notification_tx, pool) {
                     use std::io::Write;
+
                     let stderr = &mut ::std::io::stderr();
                     let errmsg = "Error writing to stderr";
-
                     writeln!(stderr, "error: {}", e).expect(errmsg);
                 }
             }
@@ -144,7 +139,7 @@ pub fn run(mqtt_options: MqttOptions) {
     }
 }
 
-fn subscribe(client: &mut MqttClient) -> Result<()> {
+fn subscribe(client: &mut MqttClient) -> Result<(), failure::Error> {
     let topics = vec![
         ("ping", QoS::Level0),
         (
@@ -164,7 +159,7 @@ fn handle_message(
     mqtt_msg: &MqttMessage,
     notification_tx: ::std::sync::mpsc::Sender<Notification>,
     pool: DbPool,
-) -> Result<()> {
+) -> Result<(), failure::Error> {
     println!("Received message: {:?}", mqtt_msg);
 
     let topic = Topic::parse(&mqtt_msg.topic)?;

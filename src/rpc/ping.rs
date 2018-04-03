@@ -1,4 +1,4 @@
-use errors::Result;
+use rpc::error::Result;
 
 build_rpc_trait! {
     pub trait Rpc {

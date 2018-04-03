@@ -1,5 +1,5 @@
-use errors::Result;
 use messages::subscription::{CreateRequest, CreateResponse};
+use rpc::error::Result;
 use topic::AppTopic;
 
 build_rpc_trait! {

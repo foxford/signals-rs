@@ -2,7 +2,7 @@ use nom::types::CompleteStr;
 
 use std::fmt;
 
-use errors::*;
+use error;
 
 mod agent;
 mod app;
@@ -25,7 +25,7 @@ pub enum Topic {
 }
 
 impl Topic {
-    pub fn parse(topic_str: &str) -> Result<Topic> {
+    pub fn parse(topic_str: &str) -> Result<Topic, error::ParseError> {
         let (_, t) = topic(CompleteStr(topic_str))?;
         Ok(t)
     }

@@ -1,12 +1,12 @@
-use std::fmt;
-use std::str::FromStr;
-
 use nom::multispace;
 use nom::types::CompleteStr;
 use serde::{Deserialize, Deserializer};
 use uuid::Uuid;
 
-use errors::Error;
+use std::fmt;
+use std::str::FromStr;
+
+use error;
 
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -50,7 +50,7 @@ impl fmt::Debug for Expr {
 }
 
 impl FromStr for Expr {
-    type Err = Error;
+    type Err = error::ParseError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let (_, ex) = expr(CompleteStr(s))?;

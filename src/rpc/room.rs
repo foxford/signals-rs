@@ -1,9 +1,9 @@
 use diesel;
 use diesel::prelude::*;
 
-use errors::Result;
 use models;
 use rpc;
+use rpc::error::Result;
 use schema::room;
 
 use messages::room::{CreateResponse, DeleteRequest, DeleteResponse, ListResponse, ReadRequest,

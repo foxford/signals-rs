@@ -3,23 +3,23 @@ use std::str::FromStr;
 use diesel;
 use diesel::prelude::*;
 
-use errors::{ErrorKind, Result};
 use models;
 use rpc;
+use rpc::error::{Error, Result};
 use schema::{agent, room, track};
 
 use messages::EventKind;
-use messages::query_parameters as query;
+use messages::query_parameters;
 use messages::track::{CreateEvent, CreateRequest, CreateResponse, DeleteEvent, DeleteRequest,
                       DeleteResponse, ListRequest, ListResponse};
 
 macro_rules! and_filter {
     ($query:ident, $filter:ident) => {
         match $filter {
-            query::Filter::RoomId(id) => {
+            query_parameters::Filter::RoomId(id) => {
                 $query = $query.filter(agent::room_id.eq(id));
             }
-            query::Filter::OwnerId(id) => {
+            query_parameters::Filter::OwnerId(id) => {
                 $query = $query.filter(track::owner_id.eq(id));
             }
         }
@@ -97,28 +97,28 @@ impl Rpc for RpcImpl {
             .into_boxed();
 
         if let Some(fq) = req.fq {
-            let expr = query::Expr::from_str(&fq)?;
+            let expr = query_parameters::Expr::from_str(&fq)?;
             match expr {
-                query::Expr::Value(filter) => {
+                query_parameters::Expr::Value(filter) => {
                     // Suppose room_id here
                     and_filter!(query, filter);
                 }
-                query::Expr::And(lhs, rhs) => match *lhs {
-                    query::Expr::Value(filter) => {
+                query_parameters::Expr::And(lhs, rhs) => match *lhs {
+                    query_parameters::Expr::Value(filter) => {
                         // Suppose room_id here
                         and_filter!(query, filter);
 
                         match *rhs {
-                            query::Expr::Value(filter) => {
+                            query_parameters::Expr::Value(filter) => {
                                 // Suppose owner_id here
                                 and_filter!(query, filter);
                             }
-                            _ => Err(ErrorKind::BadRequest)?,
+                            _ => Err(Error::BadRequest)?,
                         }
                     }
-                    _ => Err(ErrorKind::BadRequest)?,
+                    _ => Err(Error::BadRequest)?,
                 },
-                _ => Err(ErrorKind::BadRequest)?,
+                _ => Err(Error::BadRequest)?,
             }
         }
 

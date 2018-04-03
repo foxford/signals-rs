@@ -1,7 +1,7 @@
-use errors::Result;
 use messages::Method;
 use messages::webrtc::{AnswerRequest, CandidateRequest, OfferRequest};
 use rpc;
+use rpc::error::Result;
 
 build_rpc_trait! {
     pub trait Rpc {

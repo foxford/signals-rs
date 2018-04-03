@@ -12,6 +12,7 @@ use rpc::track::Rpc as TrackRpc;
 use rpc::webrtc::Rpc as WebrtcRpc;
 
 mod agent;
+mod error;
 mod ping;
 mod room;
 mod subscription;
