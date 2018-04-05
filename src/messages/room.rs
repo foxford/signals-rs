@@ -5,6 +5,16 @@ use models;
 
 // Create
 
+#[derive(Debug, Deserialize)]
+pub struct CreateRequest {
+    pub data: CreateRequestData,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct CreateRequestData {
+    pub capacity: i16,
+}
+
 #[derive(Debug, Serialize)]
 pub struct CreateResponse {
     id: Uuid,
@@ -16,6 +26,7 @@ impl CreateResponse {
         CreateResponse {
             id: room.id,
             data: CreateResponseData {
+                capacity: room.capacity,
                 created_at: room.created_at,
             },
         }
@@ -24,6 +35,7 @@ impl CreateResponse {
 
 #[derive(Debug, Serialize)]
 struct CreateResponseData {
+    capacity: i16,
     created_at: NaiveDateTime,
 }
 
@@ -60,6 +72,7 @@ impl ListResponse {
             .map(|room| ListResponseData {
                 id: room.id,
                 data: ReadResponseData {
+                    capacity: room.capacity,
                     created_at: room.created_at,
                 },
             })

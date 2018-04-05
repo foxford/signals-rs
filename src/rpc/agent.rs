@@ -1,5 +1,6 @@
-use diesel;
 use diesel::prelude::*;
+use diesel::{self, PgConnection};
+use uuid::Uuid;
 
 use std::str::FromStr;
 
@@ -157,6 +158,11 @@ impl Rpc for RpcImpl {
             label: req.data.label.clone(),
         };
 
+        let room_size = get_room_size(conn, room.id)?;
+        if room_size + 1 > room.capacity {
+            return Err(Error::RoomSizeLimit);
+        }
+
         let agent: models::RoomAgent = diesel::insert_into(room_agent::table)
             .values(&changeset)
             .get_result(conn)?;
@@ -190,4 +196,13 @@ impl Rpc for RpcImpl {
 
         Ok(resp)
     }
+}
+
+fn get_room_size(conn: &PgConnection, room_id: Uuid) -> Result<i16> {
+    let size = room_agent::table
+        .filter(room_agent::room_id.eq(room_id))
+        .count()
+        .get_result::<i64>(conn)?;
+
+    Ok(size as i16)
 }
