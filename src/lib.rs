@@ -24,6 +24,7 @@ use std::sync::{mpsc, Arc, Mutex};
 use std::thread;
 
 use messages::{Envelope, EventKind, Notification};
+pub use settings::SETTINGS;
 use topic::{AgentTopic, AppTopic, ResourceKind, Topic};
 
 macro_rules! establish_connection {

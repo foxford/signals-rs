@@ -26,7 +26,7 @@ impl CreateResponse {
         CreateResponse {
             id: room.id,
             data: CreateResponseData {
-                capacity: room.capacity as u16,
+                capacity: room.capacity,
                 created_at: room.created_at,
             },
         }
@@ -35,7 +35,7 @@ impl CreateResponse {
 
 #[derive(Debug, Serialize)]
 struct CreateResponseData {
-    capacity: u16,
+    capacity: i16,
     created_at: NaiveDateTime,
 }
 
@@ -72,7 +72,7 @@ impl ListResponse {
             .map(|room| ListResponseData {
                 id: room.id,
                 data: ReadResponseData {
-                    capacity: room.capacity as u16,
+                    capacity: room.capacity,
                     created_at: room.created_at,
                 },
             })

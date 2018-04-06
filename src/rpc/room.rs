@@ -3,8 +3,9 @@ use diesel::prelude::*;
 
 use models;
 use rpc;
-use rpc::error::Result;
+use rpc::error::{Error, Result};
 use schema::room;
+use SETTINGS;
 
 use messages::room::{CreateRequest, CreateResponse, DeleteRequest, DeleteResponse, ListResponse,
                      ReadRequest, ReadResponse};
@@ -36,6 +37,11 @@ impl Rpc for RpcImpl {
         let conn = establish_connection!(meta.db_pool.unwrap());
 
         let changeset = models::NewRoom::from(req);
+
+        let capacity_limit = SETTINGS.read().unwrap().max_room_capacity;
+        if changeset.capacity > capacity_limit {
+            return Err(Error::RoomCapacityLimit(capacity_limit));
+        }
 
         let room: models::Room = diesel::insert_into(room::table)
             .values(&changeset)
