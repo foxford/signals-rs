@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
         - name: signals-rs
-          image: netologygroup/signals-rs:latest
+          image: netologygroup/signals-rs
           env:
             - name: MQTT_HOST
               valueFrom:

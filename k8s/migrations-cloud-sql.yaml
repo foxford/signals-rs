@@ -1,0 +1,76 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: signals-migrations-cloud-sql
+spec:
+  template:
+    metadata:
+      name: signals-migrations-cloud-sql
+    spec:
+      restartPolicy: Never
+      volumes:
+        - name: cloudsql-credentials
+          secret:
+            secretName: cloudsql-credentials
+        - name: migration-scripts
+          configMap:
+            name: signals-migrations-configmap
+            defaultMode: 0744
+      containers:
+        - name: cloudsql-proxy
+          image: gcr.io/cloudsql-docker/gce-proxy:1.11
+          env:
+            - name: DATABASE_INSTANCE
+              valueFrom:
+                configMapKeyRef:
+                  name: signals-configmap
+                  key: database-instance
+          command: [ "/cloud_sql_proxy" ]
+          args: [
+            "-instances=$(DATABASE_INSTANCE)",
+            "-credential_file=/secrets/cloudsql/credentials.json"
+          ]
+          volumeMounts:
+            - name: cloudsql-credentials
+              mountPath: /secrets/cloudsql
+              readOnly: true
+          resources:
+            requests:
+              cpu: 0m
+              memory: 0Mi
+            limits:
+              cpu: 0m
+              memory: 0Mi
+        - name: migration-task
+          image: rust
+          command: [ "/migration-scripts/migration-script.sh" ]
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: cloudsql-postgresql-signals-credentials
+                  key: database_url
+          volumeMounts:
+            - name: migration-scripts
+              mountPath: /migration-scripts
+          resources:
+            requests:
+              memory: "250Mi"
+              cpu: "500m"
+            limits:
+              memory: "512Mi"
+              cpu: "700m"
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: signals-migrations-configmap
+data:
+  migration-script.sh: |
+    #!/bin/bash -e
+    rustup -V
+    rustc -V
+    git clone https://github.com/netology-group/signals-rs.git ~/signals-rs
+    cd ~/signals-rs
+    cargo install diesel_cli --no-default-features --features "postgres" --version 1.1.0
+    diesel migration run

@@ -27,25 +27,30 @@ jobs:
       rust: nightly
       before_script: cargo install clippy --debug --force
       script: cargo clippy
-    - stage: docker build/publish
-      rust: stable
+    - stage: release
       sudo: required
       services: docker
-      script: DOCKER_IMAGE_NAME=signals-rs scripts/docker.image.publish.sh
-    - stage: migrate
-      rust: stable
-      before_script: cargo install diesel_cli
-      script: diesel migration run
-    - stage: release
-      rust: stable
       env:
-        - NAMESPACE=staging APP=signals
+        - APP=signals
       script:
         - |
+          source scripts/ns.setup.profile &&
           scripts/gcloud.install.sh &&
           scripts/k8s.install.sh &&
-          PATH_TO_FILE=${TRAVIS_BUILD_DIR}/k8s scripts/k8s.chart.download.sh &&
-          PATH_TO_CHARTS=${TRAVIS_BUILD_DIR}/k8s scripts/k8s.charts.apply.sh
+          scripts/k8s.cluster.init.sh &&
+          scripts/skaffold.install.sh &&
+          PATH_TO_FILE=${TRAVIS_BUILD_DIR}/k8s/cloud-sql scripts/k8s.chart.download.sh &&
+          docker login -u ${DOCKER_USERNAME} -p ${DOCKER_PASSWORD} &&
+          scripts/skaffold.init.sh &&
+          scripts/skaffold.run.sh
+    - stage: migrate
+      script:
+        - |
+          source scripts/ns.setup.profile &&
+          scripts/gcloud.install.sh &&
+          scripts/k8s.install.sh &&
+          scripts/k8s.cluster.init.sh &&
+          PATH_TO_CHARTS=${TRAVIS_BUILD_DIR}/k8s/migrations-cloud-sql.yaml scripts/k8s.charts.apply.sh
     - stage: publish
       rust: stable
       before_script:
@@ -66,12 +71,10 @@ script:
 stages:
   - name: warmup
   - name: commit
-  - name: docker build/publish
-    if: branch = master AND type = push
   - name: test
-  - name: migrate
-    if: branch = master AND type = push AND env(DATABASE_URL) IS present
   - name: release
     if: branch = master AND type = push
+  - name: migrate
+    if: (branch = master AND type = push) AND env(TRAVIS_TAG) IS present
   - name: publish
     if: branch = master AND type = push
