@@ -1,11 +1,11 @@
 use diesel;
 use diesel::prelude::*;
 
+use SETTINGS;
 use models;
 use rpc;
 use rpc::error::{Error, Result};
 use schema::room;
-use SETTINGS;
 
 use messages::room::{CreateRequest, CreateResponse, DeleteRequest, DeleteResponse, ListResponse,
                      ReadRequest, ReadResponse};
