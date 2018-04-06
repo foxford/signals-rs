@@ -1,37 +1,62 @@
+#[macro_use]
+extern crate failure;
 extern crate rumqtt;
 extern crate signals;
 
-use std::env;
+use rumqtt::MqttOptions;
+use signals::Options;
 
-macro_rules! invalid_env {
-    ($var:expr, $err:ident) => {{
-        println!("{} {}", $var, $err);
-        std::process::exit(1);
+use std::{env, process};
+
+macro_rules! die {
+    ($err:ident) => {{
+        println!("{}", $err);
+        process::exit(1);
     }};
 }
 
 fn main() {
-    let mqtt_host = match env::var("MQTT_HOST") {
-        Ok(val) => val,
-        Err(err) => invalid_env!("MQTT_HOST", err),
-    };
+    let options = build_options().unwrap_or_else(|e| die!(e));
+
+    if let Err(e) = signals::try_run(options) {
+        die!(e);
+    }
+}
+
+fn build_options() -> Result<Options, failure::Error> {
+    let mqtt_host = env::var("MQTT_HOST").map_err(|e| VarError {
+        var: "MQTT_HOST",
+        std_error: e,
+    })?;
+
     let mqtt_port = 1883;
     let mqtt_url = format!("{}:{}", mqtt_host, mqtt_port);
 
-    let mqtt_client_id = match env::var("MQTT_CLIENT_ID") {
-        Ok(val) => val,
-        Err(err) => invalid_env!("MQTT_CLIENT_ID", err),
-    };
+    let mqtt_client_id = env::var("MQTT_CLIENT_ID").map_err(|e| VarError {
+        var: "MQTT_CLIENT_ID",
+        std_error: e,
+    })?;
 
-    let mqtt_options = rumqtt::MqttOptions::new()
+    let mqtt_options = MqttOptions::new()
         .set_keep_alive(5)
         .set_reconnect(3)
         .set_client_id(mqtt_client_id)
         .set_broker(&mqtt_url);
 
-    if let Err(err) = env::var("DATABASE_URL") {
-        invalid_env!("DATABASE_URL", err);
-    }
+    let database_url = env::var("DATABASE_URL").map_err(|e| VarError {
+        var: "DATABASE_URL",
+        std_error: e,
+    })?;
 
-    signals::run(mqtt_options);
+    Ok(Options {
+        mqtt: mqtt_options,
+        database_url,
+    })
+}
+
+#[derive(Debug, Fail)]
+#[fail(display = "{} {}", var, std_error)]
+struct VarError {
+    var: &'static str,
+    std_error: env::VarError,
 }

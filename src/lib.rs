@@ -18,7 +18,7 @@ extern crate failure;
 use diesel::{PgConnection, r2d2};
 use rumqtt::{Message as MqttMessage, MqttCallback, MqttClient, MqttOptions, QoS};
 use std::sync::{mpsc, Arc, Mutex};
-use std::{env, process, thread};
+use std::thread;
 
 use messages::{Envelope, EventKind, Notification};
 use topic::{AgentTopic, AppTopic, ResourceKind, Topic};
@@ -40,7 +40,15 @@ pub mod schema;
 
 type DbPool = r2d2::Pool<r2d2::ConnectionManager<PgConnection>>;
 
-pub fn run(mqtt_options: MqttOptions) {
+#[derive(Clone)]
+pub struct Options {
+    pub mqtt: MqttOptions,
+    pub database_url: String,
+}
+
+pub fn try_run(options: Options) -> Result<(), failure::Error> {
+    let database_url = options.database_url.clone();
+
     let (tx, rx) = mpsc::channel::<MqttMessage>();
     let tx = Mutex::new(tx);
 
@@ -51,15 +59,8 @@ pub fn run(mqtt_options: MqttOptions) {
         tx.send(msg).unwrap();
     });
 
-    let mut client = MqttClient::start(mqtt_options, Some(callbacks)).unwrap_or_else(|err| {
-        println!("error: {:?}", err);
-        process::exit(1);
-    });
-
-    subscribe(&mut client).unwrap_or_else(|err| {
-        println!("error: {:?}", err);
-        process::exit(1);
-    });
+    let mut client = MqttClient::start(options.mqtt, Some(callbacks))?;
+    subscribe(&mut client)?;
 
     let client = Arc::new(Mutex::new(client));
     let mut handles = vec![];
@@ -67,7 +68,6 @@ pub fn run(mqtt_options: MqttOptions) {
     let handle = thread::spawn({
         let client = Arc::clone(&client);
         move || {
-            let database_url = env::var("DATABASE_URL").unwrap();
             let manager = r2d2::ConnectionManager::<PgConnection>::new(database_url);
             let pool = r2d2::Pool::builder()
                 .build(manager)
@@ -137,6 +137,8 @@ pub fn run(mqtt_options: MqttOptions) {
     for handle in handles {
         handle.join().expect("Error joining a thread");
     }
+
+    Ok(())
 }
 
 fn subscribe(client: &mut MqttClient) -> Result<(), failure::Error> {
