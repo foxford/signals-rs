@@ -18,7 +18,7 @@ macro_rules! die {
 fn main() {
     let options = build_options().unwrap_or_else(|e| die!(e));
 
-    if let Err(e) = signals::try_run(options) {
+    if let Err(e) = signals::run(options) {
         die!(e);
     }
 }

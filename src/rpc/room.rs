@@ -6,15 +6,15 @@ use rpc;
 use rpc::error::Result;
 use schema::room;
 
-use messages::room::{CreateResponse, DeleteRequest, DeleteResponse, ListResponse, ReadRequest,
-                     ReadResponse};
+use messages::room::{CreateRequest, CreateResponse, DeleteRequest, DeleteResponse, ListResponse,
+                     ReadRequest, ReadResponse};
 
 build_rpc_trait! {
     pub trait Rpc {
         type Metadata;
 
         #[rpc(meta, name = "room.create")]
-        fn create(&self, Self::Metadata) -> Result<CreateResponse>;
+        fn create(&self, Self::Metadata, CreateRequest) -> Result<CreateResponse>;
 
         #[rpc(meta, name = "room.read")]
         fn read(&self, Self::Metadata, ReadRequest) -> Result<ReadResponse>;
@@ -32,11 +32,13 @@ pub struct RpcImpl;
 impl Rpc for RpcImpl {
     type Metadata = rpc::Meta;
 
-    fn create(&self, meta: rpc::Meta) -> Result<CreateResponse> {
+    fn create(&self, meta: rpc::Meta, req: CreateRequest) -> Result<CreateResponse> {
         let conn = establish_connection!(meta.db_pool.unwrap());
 
+        let changeset = models::NewRoom::from(req);
+
         let room: models::Room = diesel::insert_into(room::table)
-            .default_values()
+            .values(&changeset)
             .get_result(conn)?;
 
         Ok(CreateResponse::new(&room))

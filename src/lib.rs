@@ -14,6 +14,9 @@ extern crate serde_json;
 extern crate uuid;
 #[macro_use]
 extern crate failure;
+extern crate config;
+#[macro_use]
+extern crate lazy_static;
 
 use diesel::{PgConnection, r2d2};
 use rumqtt::{Message as MqttMessage, MqttCallback, MqttClient, MqttOptions, QoS};
@@ -32,6 +35,7 @@ macro_rules! establish_connection {
 pub mod error;
 pub mod messages;
 pub mod rpc;
+pub mod settings;
 pub mod topic;
 pub mod version;
 
@@ -46,7 +50,9 @@ pub struct Options {
     pub database_url: String,
 }
 
-pub fn try_run(options: Options) -> Result<(), failure::Error> {
+pub fn run(options: Options) -> Result<(), failure::Error> {
+    settings::init()?;
+
     let database_url = options.database_url.clone();
 
     let (tx, rx) = mpsc::channel::<MqttMessage>();

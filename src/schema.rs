@@ -8,6 +8,7 @@ table! {
     room (id) {
         id -> Uuid,
         created_at -> Timestamp,
+        capacity -> Int2,
     }
 }
 
