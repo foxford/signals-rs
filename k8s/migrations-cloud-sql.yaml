@@ -42,7 +42,7 @@ spec:
               cpu: 0m
               memory: 0Mi
         - name: migration-task
-          image: rust
+          image: netologygroup/signals-migrations
           command: [ "/migration-scripts/migration-script.sh" ]
           env:
             - name: DATABASE_URL
@@ -67,10 +67,6 @@ metadata:
   name: signals-migrations-configmap
 data:
   migration-script.sh: |
-    #!/bin/bash -e
-    rustup -V
-    rustc -V
-    git clone https://github.com/netology-group/signals-rs.git ~/signals-rs
-    cd ~/signals-rs
-    cargo install diesel_cli --no-default-features --features "postgres" --version 1.1.0
+    #!/bin/sh -e
     diesel migration run
+    echo 'Migrations were completed'

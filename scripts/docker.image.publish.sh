@@ -5,7 +5,8 @@ if [[ ! ${DOCKER_PASSWORD} ]]; then >&2 echo "DOCKER_PASSWORD is not specified";
 if [[ ! ${DOCKER_USERNAME} ]]; then >&2 echo "DOCKER_USERNAME is not specified"; exit 1; fi
 
 DOCKER_IMAGE_TAG=${DOCKER_IMAGE_TAG:-'latest'}
+DOCKER_FILE=${DOCKER_FILE:-'Dockerfile'}
 
-docker build -f docker/Dockerfile -t "${DOCKER_IMAGE_OWNER}/${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_TAG}" .
+docker build -f "docker/${DOCKER_FILE}" -t "${DOCKER_IMAGE_OWNER}/${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_TAG}" .
 docker login -u ${DOCKER_USERNAME} -p ${DOCKER_PASSWORD}
 docker push "${DOCKER_IMAGE_OWNER}/${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_TAG}"

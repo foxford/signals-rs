@@ -44,12 +44,15 @@ jobs:
           scripts/skaffold.init.sh &&
           scripts/skaffold.run.sh
     - stage: migrate
+      sudo: required
+      services: docker
       script:
         - |
           source scripts/ns.setup.profile &&
           scripts/gcloud.install.sh &&
           scripts/k8s.install.sh &&
           scripts/k8s.cluster.init.sh &&
+          DOCKER_IMAGE_NAME=signals-migrations DOCKER_FILE=migrations.Dockerfile scripts/docker.image.publish.sh &&
           PATH_TO_CHARTS=${TRAVIS_BUILD_DIR}/k8s/migrations-cloud-sql.yaml scripts/k8s.charts.apply.sh
     - stage: publish
       rust: stable
