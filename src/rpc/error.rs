@@ -2,6 +2,7 @@ use diesel;
 use jsonrpc_core as jsonrpc;
 
 use error;
+use models::RoomCapacity;
 
 pub type Result<T> = ::std::result::Result<T, Error>;
 
@@ -17,7 +18,7 @@ pub enum Error {
     InvalidParameters(#[cause] error::ParseError),
 
     #[fail(display = "Room capacity limit is: {}", _0)]
-    RoomCapacityLimit(i16),
+    RoomCapacityLimit(RoomCapacity),
 
     #[fail(display = "Room size limit is reached")]
     RoomSizeLimit,

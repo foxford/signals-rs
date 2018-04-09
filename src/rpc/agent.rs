@@ -198,11 +198,11 @@ impl Rpc for RpcImpl {
     }
 }
 
-fn get_room_size(conn: &PgConnection, room_id: Uuid) -> Result<i16> {
+fn get_room_size(conn: &PgConnection, room_id: Uuid) -> Result<u8> {
     let size = room_agent::table
         .filter(room_agent::room_id.eq(room_id))
         .count()
         .get_result::<i64>(conn)?;
 
-    Ok(size as i16)
+    Ok(size as u8)
 }

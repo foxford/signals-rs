@@ -12,7 +12,7 @@ pub struct CreateRequest {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct CreateRequestData {
-    pub capacity: i16,
+    pub capacity: models::RoomCapacity,
 }
 
 #[derive(Debug, Serialize)]
@@ -35,7 +35,7 @@ impl CreateResponse {
 
 #[derive(Debug, Serialize)]
 struct CreateResponseData {
-    capacity: i16,
+    capacity: models::RoomCapacity,
     created_at: NaiveDateTime,
 }
 
