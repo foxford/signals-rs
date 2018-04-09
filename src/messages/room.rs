@@ -13,6 +13,8 @@ pub struct CreateRequest {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct CreateRequestData {
     pub capacity: i16,
+    pub available_from: NaiveDateTime,
+    pub available_to: NaiveDateTime,
 }
 
 #[derive(Debug, Serialize)]
@@ -27,6 +29,8 @@ impl CreateResponse {
             id: room.id,
             data: CreateResponseData {
                 capacity: room.capacity,
+                available_from: room.available_from,
+                available_to: room.available_to,
                 created_at: room.created_at,
             },
         }
@@ -36,6 +40,8 @@ impl CreateResponse {
 #[derive(Debug, Serialize)]
 struct CreateResponseData {
     capacity: i16,
+    available_from: NaiveDateTime,
+    available_to: NaiveDateTime,
     created_at: NaiveDateTime,
 }
 
@@ -73,6 +79,8 @@ impl ListResponse {
                 id: room.id,
                 data: ReadResponseData {
                     capacity: room.capacity,
+                    available_from: room.available_from,
+                    available_to: room.available_to,
                     created_at: room.created_at,
                 },
             })

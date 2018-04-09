@@ -21,6 +21,9 @@ pub enum Error {
 
     #[fail(display = "Room size limit is reached")]
     RoomSizeLimit,
+
+    #[fail(display = "Room availability limit is: {}", _0)]
+    RoomAvailabilityLimit(u32),
 }
 
 impl From<diesel::result::Error> for Error {

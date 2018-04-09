@@ -1,3 +1,4 @@
+use chrono::Duration;
 use diesel;
 use diesel::prelude::*;
 
@@ -41,6 +42,13 @@ impl Rpc for RpcImpl {
         let capacity_limit = SETTINGS.read().unwrap().max_room_capacity;
         if changeset.capacity > capacity_limit {
             return Err(Error::RoomCapacityLimit(capacity_limit));
+        }
+
+        let availability_limit = SETTINGS.read().unwrap().max_room_availability;
+        let duration_limit = Duration::seconds(i64::from(availability_limit));
+        let duration = changeset.available_to - changeset.available_from;
+        if duration > duration_limit {
+            return Err(Error::RoomAvailabilityLimit(availability_limit));
         }
 
         let room: models::Room = diesel::insert_into(room::table)

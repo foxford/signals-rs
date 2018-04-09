@@ -9,12 +9,16 @@ pub struct Room {
     pub id: Uuid,
     pub created_at: NaiveDateTime,
     pub capacity: i16,
+    pub available_from: NaiveDateTime,
+    pub available_to: NaiveDateTime,
 }
 
 #[derive(Insertable, Debug)]
 #[table_name = "room"]
 pub struct NewRoom {
     pub capacity: i16,
+    pub available_from: NaiveDateTime,
+    pub available_to: NaiveDateTime,
 }
 
 impl From<CreateRequest> for NewRoom {
@@ -23,6 +27,8 @@ impl From<CreateRequest> for NewRoom {
 
         NewRoom {
             capacity: data.capacity,
+            available_from: data.available_from,
+            available_to: data.available_to,
         }
     }
 }

@@ -20,12 +20,14 @@ pub fn init() -> Result<(), failure::Error> {
 #[derive(Debug, Deserialize)]
 pub struct Settings {
     pub max_room_capacity: i16,
+    pub max_room_availability: u32,
 }
 
 impl Default for Settings {
     fn default() -> Self {
         Settings {
             max_room_capacity: 0,
+            max_room_availability: 0,
         }
     }
 }

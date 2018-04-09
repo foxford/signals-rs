@@ -9,6 +9,8 @@ table! {
         id -> Uuid,
         created_at -> Timestamp,
         capacity -> Int2,
+        available_from -> Timestamp,
+        available_to -> Timestamp,
     }
 }
 
