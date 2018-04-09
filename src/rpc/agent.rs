@@ -150,7 +150,7 @@ impl Rpc for RpcImpl {
     fn join_room(&self, meta: rpc::Meta, req: JoinRequest) -> Result<JoinResponse> {
         let conn = establish_connection!(meta.db_pool.unwrap());
 
-        let room: models::Room = room::table.find(req.room_id).first(conn)?;
+        let room = get_available_room(conn, req.room_id)?;
 
         let changeset = models::NewRoomAgent {
             room_id: room.id,
@@ -205,4 +205,13 @@ fn get_room_size(conn: &PgConnection, room_id: Uuid) -> Result<i16> {
         .get_result::<i64>(conn)?;
 
     Ok(size as i16)
+}
+
+fn get_available_room(conn: &PgConnection, room_id: Uuid) -> Result<models::Room> {
+    room::table
+        .find(room_id)
+        .filter(room::available_from.le(diesel::dsl::now))
+        .filter(room::available_to.gt(diesel::dsl::now))
+        .get_result(conn)
+        .map_err(Error::from)
 }
