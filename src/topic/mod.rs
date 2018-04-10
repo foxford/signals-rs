@@ -9,8 +9,8 @@ mod app;
 mod ping;
 mod state;
 
-pub use topic::agent::AgentTopic;
 use topic::agent::topic as agent_topic;
+pub use topic::agent::AgentTopic;
 pub use topic::app::{AppTopic, ResourceKind};
 use topic::ping::{topic as ping_topic, PingTopicKind};
 pub use topic::state::{topic as state_topic, StateTopic};

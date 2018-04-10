@@ -1,5 +1,5 @@
-use messages::Method;
 use messages::webrtc::{AnswerRequest, CandidateRequest, OfferRequest};
+use messages::Method;
 use rpc;
 use rpc::error::Result;
 

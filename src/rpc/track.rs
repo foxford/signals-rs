@@ -4,10 +4,10 @@ use uuid::Uuid;
 
 use std::str::FromStr;
 
-use messages::EventKind;
 use messages::query_parameters;
 use messages::track::{CreateEvent, CreateRequest, CreateResponse, DeleteEvent, DeleteRequest,
                       DeleteResponse, ListRequest, ListResponse};
+use messages::EventKind;
 use models;
 use rpc;
 use rpc::error::{Error, Result};

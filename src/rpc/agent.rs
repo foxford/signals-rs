@@ -3,13 +3,13 @@ use diesel::prelude::*;
 
 use std::str::FromStr;
 
-use messages::EventKind;
 use messages::agent::{CreateRequest, CreateResponse, DeleteRequest, DeleteResponse, JoinEvent,
                       JoinEventPayload, JoinRequest, JoinResponse, LeaveEvent, LeaveRequest,
                       LeaveResponse, ListRequest, ListResponse, ReadRequest, ReadResponse,
                       UpdateRequest, UpdateResponse};
 use messages::query_parameters;
 use messages::track::{DeleteEvent as TrackDeleteEvent, DeleteResponse as TrackDeleteResponse};
+use messages::EventKind;
 use models;
 use rpc;
 use rpc::error::{Error, Result};

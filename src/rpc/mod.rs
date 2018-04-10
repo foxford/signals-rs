@@ -2,7 +2,6 @@ use jsonrpc_core::{MetaIoHandler, Metadata};
 
 use std::sync::mpsc::Sender;
 
-use DbPool;
 use messages::{EnvelopeSubject, Notification};
 use rpc::agent::Rpc as AgentRpc;
 use rpc::ping::Rpc as PingRpc;
@@ -10,6 +9,7 @@ use rpc::room::Rpc as RoomRpc;
 use rpc::subscription::Rpc as SubscriptionRpc;
 use rpc::track::Rpc as TrackRpc;
 use rpc::webrtc::Rpc as WebrtcRpc;
+use DbPool;
 
 mod agent;
 mod error;

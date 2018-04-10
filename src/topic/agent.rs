@@ -82,9 +82,9 @@ impl fmt::Display for AgentTopicKind {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use nom::types::CompleteStr;
     use nom::Err::Error as NomError;
     use nom::ErrorKind::*;
-    use nom::types::CompleteStr;
 
     #[test]
     fn parse_topic() {

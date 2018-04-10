@@ -15,7 +15,7 @@ extern crate uuid;
 #[macro_use]
 extern crate failure;
 
-use diesel::{PgConnection, r2d2};
+use diesel::{r2d2, PgConnection};
 use rumqtt::{Message as MqttMessage, MqttCallback, MqttClient, MqttOptions, QoS};
 use std::sync::{mpsc, Arc, Mutex};
 use std::thread;
